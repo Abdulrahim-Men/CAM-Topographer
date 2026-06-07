@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="CAM Topographer – DXF to KML/KMZ converter for Cameroonian surveyors">
+<meta name="author" content="Civil-Arch-Immo · Abdulrahim · Géomètre Expert · Yaoundé, Cameroun">
+<meta name="copyright" content="© 2025 Civil-Arch-Immo. All rights reserved.">
+<!-- © 2025 Civil-Arch-Immo · CAM Topographer · All rights reserved.
+     Developed by Abdulrahim, Géomètre Expert, Yaoundé, Cameroun.
+     Unauthorized copying, redistribution or commercial use is strictly prohibited. -->
 <title>CAM Topographer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -64,6 +69,760 @@ body{
 .brand-logo{
   width:38px;height:38px;
   background:linear-gradient(135deg,var(--green) 0%,var(--green3) 100%);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  box-shadow:0 4px 14px rgba(0,122,61,0.35);
+  flex-shrink:0;
+}
+
+.brand-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.15rem;
+  font-weight:700;
+  letter-spacing:0.3px;
+  line-height:1.1;
+}
+
+.brand-sub{
+  font-size:10px;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+/* Language switcher */
+.lang-switch{
+  display:flex;
+  background:var(--navy3);
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+.lang-btn{
+  padding:7px 14px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:1px;
+  cursor:pointer;
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  transition:all 0.2s;
+}
+
+.lang-btn.active{
+  background:var(--green);
+  color:#fff;
+}
+
+/* ── Page Layout ───────────────────────── */
+.page{max-width:700px;margin:0 auto;padding:28px 16px 80px}
+
+/* ── Hero banner ────────────────────────── */
+.hero{
+  background:linear-gradient(135deg,var(--navy2) 0%,var(--navy3) 100%);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:28px 24px;
+  margin-bottom:24px;
+  position:relative;
+  overflow:hidden;
+}
+
+.hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 90% 50%,rgba(0,122,61,0.12) 0%,transparent 70%),
+    radial-gradient(ellipse 30% 30% at 10% 10%,rgba(252,209,22,0.06) 0%,transparent 60%);
+  pointer-events:none;
+}
+
+.hero-flag{
+  display:flex;gap:3px;margin-bottom:16px;width:42px;
+}
+.flag-stripe{height:6px;border-radius:2px;flex:1;}
+
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.5rem,5vw,2rem);
+  font-weight:900;
+  line-height:1.15;
+  margin-bottom:8px;
+}
+
+.hero h1 span{color:var(--green3);}
+
+.hero p{
+  color:var(--light);
+  font-size:0.92rem;
+  max-width:480px;
+  line-height:1.6;
+}
+
+/* Workflow chips */
+.workflow{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+
+.wf-chip{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:5px 12px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--light);
+  background:rgba(255,255,255,0.04);
+  letter-spacing:0.5px;
+}
+
+.wf-chip.highlight{
+  background:rgba(0,122,61,0.2);
+  border-color:var(--green);
+  color:var(--green3);
+}
+
+.wf-arrow{color:var(--border);font-size:14px;}
+
+/* ── Cards ──────────────────────────────── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:24px;
+  margin-bottom:20px;
+}
+
+.card-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--green3);
+  margin-bottom:18px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.card-title::after{
+  content:'';flex:1;height:1px;
+  background:var(--border);
+}
+
+/* ── Drop zone ──────────────────────────── */
+.dropzone{
+  border:2px dashed var(--border);
+  border-radius:var(--radius);
+  padding:44px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.25s;
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,0.015);
+}
+
+.dropzone::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,rgba(0,194,97,0.07) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.3s;
+}
+
+.dropzone:hover,.dropzone.over{
+  border-color:var(--green2);
+  box-shadow:0 0 28px rgba(0,122,61,0.15);
+}
+
+.dropzone:hover::before,.dropzone.over::before{opacity:1;}
+
+.dz-icon{font-size:44px;margin-bottom:12px;display:block;}
+
+.dz-title{
+  font-size:1.05rem;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.dz-sub{
+  font-size:0.85rem;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+}
+
+.dz-types{
+  display:flex;gap:8px;justify-content:center;
+  margin-top:16px;flex-wrap:wrap;
+}
+
+.dz-tag{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  border-radius:20px;
+  border:1px solid rgba(0,194,97,0.3);
+  color:var(--green3);
+  background:rgba(0,122,61,0.1);
+  letter-spacing:1px;
+}
+
+.dz-tag.grey{
+  border-color:var(--border);
+  color:var(--muted);
+  background:transparent;
+}
+
+#fileInput{display:none;}
+
+/* ── File info strip ─────────────────────── */
+.file-strip{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:rgba(0,122,61,0.08);
+  border:1px solid rgba(0,194,97,0.2);
+  border-radius:var(--radius);
+  margin-bottom:20px;
+  animation:fadeSlide 0.3s ease;
+}
+
+.file-strip-icon{font-size:26px;flex-shrink:0;}
+
+.file-strip-name{
+  font-weight:600;font-size:14px;
+  word-break:break-all;flex:1;
+}
+
+.file-strip-size{
+  font-family:'DM Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-top:2px;
+}
+
+/* ── Form elements ──────────────────────── */
+.form-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:16px;
+}
+
+@media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+
+.form-group{margin-bottom:16px;}
+
+label{
+  display:block;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+input[type=text],input[type=number],select,textarea{
+  width:100%;
+  background:var(--navy3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:var(--green2);
+  box-shadow:0 0 0 3px rgba(0,122,61,0.15);
+}
+
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b8299' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:36px;
+}
+
+select option{background:var(--navy2);}
+textarea{resize:vertical;min-height:72px;}
+
+/* ── UTM panel ──────────────────────────── */
+.utm-panel{
+  background:rgba(0,122,61,0.07);
+  border:1px solid rgba(0,194,97,0.2);
+  border-radius:10px;
+  padding:18px;
+  margin-bottom:16px;
+  display:none;
+  animation:fadeSlide 0.25s ease;
+}
+
+.utm-panel.visible{display:block;}
+
+.utm-panel-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--green3);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+
+.utm-preview{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px 14px;
+  margin-top:12px;
+  line-height:1.8;
+}
+
+.utm-help{
+  margin-top:12px;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.8;
+  padding:12px 14px;
+  background:rgba(252,209,22,0.05);
+  border-left:3px solid var(--yellow);
+  border-radius:0 6px 6px 0;
+}
+
+.utm-help strong{color:var(--text);}
+
+/* ── Layer table ─────────────────────────── */
+.layer-table-wrap{overflow-x:auto;margin-top:14px;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+
+th{
+  text-align:left;
+  padding:8px 10px;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+}
+
+td{
+  padding:9px 10px;
+  border-bottom:1px solid rgba(30,58,85,0.5);
+  vertical-align:middle;
+}
+
+.color-dot{
+  width:13px;height:13px;
+  border-radius:50%;
+  display:inline-block;
+  vertical-align:middle;
+  margin-right:6px;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+input[type=checkbox]{
+  width:17px;height:17px;
+  cursor:pointer;
+  accent-color:var(--green2);
+}
+
+/* ── Stats row ──────────────────────────── */
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+@media(max-width:400px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+
+.stat-box{
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  text-align:center;
+}
+
+.stat-val{
+  font-family:'Playfair Display',serif;
+  font-size:1.6rem;
+  font-weight:700;
+  color:var(--green3);
+}
+
+.stat-lbl{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+
+/* ── Progress ────────────────────────────── */
+.progress-wrap{
+  margin-top:18px;display:none;
+}
+.progress-wrap.visible{display:block;}
+
+.progress-lbl{
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--muted);
+  margin-bottom:6px;
+  display:flex;justify-content:space-between;
+}
+
+.progress-bg{
+  height:5px;background:var(--border);
+  border-radius:3px;overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--green3));
+  border-radius:3px;width:0%;
+  transition:width 0.4s ease;
+}
+
+/* ── Log ─────────────────────────────────── */
+.log-box{
+  margin-top:14px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--muted);
+  line-height:2;
+  max-height:110px;
+  overflow-y:auto;
+}
+.log-ok{color:var(--success);}
+.log-warn{color:var(--warn);}
+.log-err{color:var(--error);}
+
+/* ── Buttons ─────────────────────────────── */
+.btn-row{
+  display:flex;gap:12px;
+  margin-top:24px;flex-wrap:wrap;
+}
+
+.btn{
+  flex:1;min-width:130px;
+  padding:15px 20px;
+  border:none;border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s;
+  letter-spacing:0.2px;
+  display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  -webkit-appearance:none;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--green) 0%,var(--green2) 100%);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(0,122,61,0.3);
+}
+
+.btn-primary:hover:not(:disabled){
+  background:linear-gradient(135deg,var(--green2) 0%,var(--green3) 100%);
+  box-shadow:0 6px 22px rgba(0,122,61,0.45);
+  transform:translateY(-1px);
+}
+
+.btn-secondary{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--light);
+}
+
+.btn-secondary:hover:not(:disabled){
+  border-color:var(--green2);color:var(--green3);
+}
+
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+.btn:active:not(:disabled){transform:scale(0.98)!important;}
+
+/* ── Download section ────────────────────── */
+.dl-section{display:none;margin-top:20px;}
+.dl-section.visible{display:block;animation:fadeSlide 0.35s ease;}
+
+.kml-preview{
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  max-height:180px;
+  overflow-y:auto;
+  white-space:pre;
+  line-height:1.7;
+  margin-top:14px;
+}
+
+.kml-tag{color:#7dd3fc;}
+.kml-val{color:#fca5a5;}
+
+.dl-btns{
+  display:flex;gap:12px;
+  margin-top:18px;flex-wrap:wrap;
+}
+
+.dl-btn{
+  flex:1;min-width:150px;
+  display:flex;align-items:center;
+  justify-content:center;gap:12px;
+  padding:18px 20px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--navy2);
+  cursor:pointer;
+  transition:all 0.2s;
+  text-decoration:none;
+  color:var(--text);
+}
+
+.dl-btn:hover{
+  border-color:var(--green2);
+  background:rgba(0,122,61,0.1);
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+}
+
+.dl-btn-icon{font-size:26px;}
+
+.dl-btn-label{
+  font-weight:600;font-size:15px;
+}
+
+.dl-btn-sub{
+  font-family:'DM Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-top:2px;
+}
+
+.dl-btn.kmz{border-color:rgba(252,209,22,0.25);}
+.dl-btn.kmz:hover{
+  border-color:var(--yellow);
+  background:rgba(252,209,22,0.06);
+}
+
+/* ── How-to guide section ────────────────── */
+.guide-section{margin-top:24px;}
+
+.guide-steps{
+  counter-reset:step;
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  margin-top:14px;
+}
+
+.guide-step{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:16px;
+  background:var(--navy2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  transition:border-color 0.2s;
+}
+
+.guide-step:hover{border-color:var(--green);}
+
+.step-num{
+  width:32px;height:32px;flex-shrink:0;
+  background:var(--green);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;
+  font-weight:700;font-size:15px;
+  color:#fff;
+  box-shadow:0 3px 10px rgba(0,122,61,0.4);
+}
+
+.step-content{flex:1;}
+.step-title{font-weight:600;font-size:14px;margin-bottom:4px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.step-code{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  background:var(--navy);
+  padding:6px 10px;
+  border-radius:5px;
+  border:1px solid var(--border);
+  display:inline-block;
+  margin-top:6px;
+  color:var(--green3);
+}
+
+/* ── Alert / info box ────────────────────── */
+.info-box{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:14px 16px;
+  border-radius:8px;
+  margin-bottom:16px;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.info-box.yellow{
+  background:rgba(252,209,22,0.07);
+  border:1px solid rgba(252,209,22,0.25);
+  color:var(--light);
+}
+
+.info-box.green{
+  background:rgba(0,122,61,0.1);
+  border:1px solid rgba(0,194,97,0.25);
+  color:var(--light);
+}
+
+.info-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+
+/* ── Footer ─────────────────────────────── */
+footer{
+  text-align:center;
+  padding:32px 20px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--border);
+  letter-spacing:1px;
+  border-top:1px solid var(--border);
+  margin-top:40px;
+}
+
+footer span{color:var(--green);}
+
+/* ── Animations ─────────────────────────── */
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ── Scrollbar ──────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--navy);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── Responsive ─────────────────────────── */
+@media(max-width:360px){
+  .topbar{padding:0 12px;}
+  .brand-name{font-size:1rem;}
+  .page{padding:20px 12px 60px;}
+  .card{padding:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOP BAR ═══════════════════ -->
+<nav class="topbar">
+  <div class="brand">
+    <div class="brand-logo">🗺️</div>
+    <div>
+      <div class="brand-name">CAM Topographer</div>
+      <div class="brand-sub" data-i18n="tagline">Survey · Convert · Map</div>
+    </div>
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════ MAIN PAGE ═══════════════════ -->
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-flag">
+      <div class="flag-stripe" style="background:#007a3d;"></div>
+      <div class="flag-stripe" style="background:#ce1126;"></div>
+      <div class="flag-stripe" style="background:#fcd116;"></div>
+    </div>
+    <h1 data-i18n="hero_title">Convert Your Survey<br><span>Directly to Google Earth</span></h1>
+    <p data-i18n="hero_sub">Built for Cameroonian surveyors. Upload your DXF drawing, set your UTM zone, and download a KML/KMZ file ready for Google Earth — in seconds.</p>
+    <div class="workflow">
+      <span class="wf-chip">AutoCAD DXF</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip highlight">CAM Topographer</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip">KML / KMZ</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip">Google Earth</span>
+    </div>
+  </div>
+
+  <!-- ── STEP 1: Upload ── -->
+  <div class="card">
+    <div class="card-title">
+      <span>01</span>
+      <span data-i18n="step1_title">Upload Drawing File</span>
+    </div>
+
+    <div class="info-box yellow" id="dwgWarning" style="display:none;">
+      <span class="info-icon">⚠️</span>
+      <div>
+        <strong data-i18n="dwg_warn_title">DWG File Detected</strong><br>
+        <span data-i18n="dwg_warn_body">DWG is Autodesk's proprietary format and cannot be read directly in a browser. Please export your drawing as DXF from AutoCAD first: <strong>File → Save As → AutoCAD DXF (*.dxf)</strong></span>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <span class="dz-icon">📐</span>
+      <div class="dz-title" data-i18n="dz_title">Drop your AutoCAD DXF file here</div>
+      <div class="dz-sub" data-i18n="dz_sub">or tap to browse files</div>
+      <div class="dz-types">
+        <span class="dz-tag">.DXF</span>
+        <span class="dz-tag grey">.CSV coords</span>
+        <span class="dz-tag grey">.TXT points</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".dxf,.csv,.txt,.dwg">
+  </div>
+
+  <!-- ── STEP 2: Configure ── -->
+  <div class="card" id="configCard" style="display:none;">
+    <div class="card-title">
+      <span>02</span>
+      <span data-i18n="step2_title">Configure Coordinate System</span>
+    </div>
+
+    <!-- File strip -->
+    <div class="file-strip" id="fileStrip">
+      <div class="file-strip-icon" id="fileIcon">📄</div>
+      <div>
+        <div class="file-strip-name" id="fileName">—</div>
+        <div class="file-strip-size" id="fileSize">—</div>
+      </div>
+    </div>
+
+    <!-- Coord system + unit -->
+    <div class="form-row">
+      <div>
+        <label data-i18n="lbl_coordsys">Coordinate System</label>
+      background:linear-gradient(135deg,var(--green) 0%,var(--green3) 100%);
   border-radius:8px;
   display:flex;align-items:center;justify-content:center;
   font-size:20px;
