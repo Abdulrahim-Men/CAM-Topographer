@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0d1b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="CAM Topographer – DXF to KML/KMZ converter for Cameroonian surveyors">
+<meta name="author" content="Civil-Arch-Immo · Abdulrahim · Géomètre Expert · Yaoundé, Cameroun">
+<meta name="copyright" content="© 2025 Civil-Arch-Immo. All rights reserved.">
+<!-- © 2025 Civil-Arch-Immo · CAM Topographer · All rights reserved.
+     Developed by Abdulrahim, Géomètre Expert, Yaoundé, Cameroun.
+     Unauthorized copying, redistribution or commercial use is strictly prohibited. -->
+<title>CAM Topographer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+   Navy + Cameroon Green + Gold
+═══════════════════════════════════════ */
+:root {
+  --navy:    #0d1b2a;
+  --navy2:   #112236;
+  --navy3:   #162d45;
+  --border:  #1e3a55;
+  --green:   #007a3d;  /* Cameroon flag green */
+  --green2:  #009e4f;
+  --green3:  #00c261;
+  --gold:    #ce1126;  /* Cameroon flag red used as accent */
+  --yellow:  #fcd116;  /* Cameroon flag yellow */
+  --text:    #e8edf2;
+  --muted:   #6b8299;
+  --light:   #a8bfcf;
+  --success: #00c261;
+  --error:   #e53e3e;
+  --warn:    #fcd116;
+  --surface: #0f2236;
+  --radius:  10px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+html{scroll-behavior:smooth}
+
+body{
+  background:var(--navy);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  font-size:16px;
+  line-height:1.5;
+}
+
+/* ── Topbar ─────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,27,42,0.96);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:64px;
+}
+
+.brand{display:flex;align-items:center;gap:12px}
+
+.brand-logo{
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--green) 0%,var(--green3) 100%);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  box-shadow:0 4px 14px rgba(0,122,61,0.35);
+  flex-shrink:0;
+}
+
+.brand-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.15rem;
+  font-weight:700;
+  letter-spacing:0.3px;
+  line-height:1.1;
+}
+
+.brand-sub{
+  font-size:10px;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+
+/* Language switcher */
+.lang-switch{
+  display:flex;
+  background:var(--navy3);
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+.lang-btn{
+  padding:7px 14px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:1px;
+  cursor:pointer;
+  border:none;
+  background:transparent;
+  color:var(--muted);
+  transition:all 0.2s;
+}
+
+.lang-btn.active{
+  background:var(--green);
+  color:#fff;
+}
+
+/* ── Page Layout ───────────────────────── */
+.page{max-width:700px;margin:0 auto;padding:28px 16px 80px}
+
+/* ── Hero banner ────────────────────────── */
+.hero{
+  background:linear-gradient(135deg,var(--navy2) 0%,var(--navy3) 100%);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:28px 24px;
+  margin-bottom:24px;
+  position:relative;
+  overflow:hidden;
+}
+
+.hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 90% 50%,rgba(0,122,61,0.12) 0%,transparent 70%),
+    radial-gradient(ellipse 30% 30% at 10% 10%,rgba(252,209,22,0.06) 0%,transparent 60%);
+  pointer-events:none;
+}
+
+.hero-flag{
+  display:flex;gap:3px;margin-bottom:16px;width:42px;
+}
+.flag-stripe{height:6px;border-radius:2px;flex:1;}
+
+.hero h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.5rem,5vw,2rem);
+  font-weight:900;
+  line-height:1.15;
+  margin-bottom:8px;
+}
+
+.hero h1 span{color:var(--green3);}
+
+.hero p{
+  color:var(--light);
+  font-size:0.92rem;
+  max-width:480px;
+  line-height:1.6;
+}
+
+/* Workflow chips */
+.workflow{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+
+.wf-chip{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:5px 12px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--light);
+  background:rgba(255,255,255,0.04);
+  letter-spacing:0.5px;
+}
+
+.wf-chip.highlight{
+  background:rgba(0,122,61,0.2);
+  border-color:var(--green);
+  color:var(--green3);
+}
+
+.wf-arrow{color:var(--border);font-size:14px;}
+
+/* ── Cards ──────────────────────────────── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:24px;
+  margin-bottom:20px;
+}
+
+.card-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--green3);
+  margin-bottom:18px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.card-title::after{
+  content:'';flex:1;height:1px;
+  background:var(--border);
+}
+
+/* ── Drop zone ──────────────────────────── */
+.dropzone{
+  border:2px dashed var(--border);
+  border-radius:var(--radius);
+  padding:44px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.25s;
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,0.015);
+}
+
+.dropzone::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center,rgba(0,194,97,0.07) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.3s;
+}
+
+.dropzone:hover,.dropzone.over{
+  border-color:var(--green2);
+  box-shadow:0 0 28px rgba(0,122,61,0.15);
+}
+
+.dropzone:hover::before,.dropzone.over::before{opacity:1;}
+
+.dz-icon{font-size:44px;margin-bottom:12px;display:block;}
+
+.dz-title{
+  font-size:1.05rem;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.dz-sub{
+  font-size:0.85rem;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+}
+
+.dz-types{
+  display:flex;gap:8px;justify-content:center;
+  margin-top:16px;flex-wrap:wrap;
+}
+
+.dz-tag{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  border-radius:20px;
+  border:1px solid rgba(0,194,97,0.3);
+  color:var(--green3);
+  background:rgba(0,122,61,0.1);
+  letter-spacing:1px;
+}
+
+.dz-tag.grey{
+  border-color:var(--border);
+  color:var(--muted);
+  background:transparent;
+}
+
+#fileInput{display:none;}
+
+/* ── File info strip ─────────────────────── */
+.file-strip{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:rgba(0,122,61,0.08);
+  border:1px solid rgba(0,194,97,0.2);
+  border-radius:var(--radius);
+  margin-bottom:20px;
+  animation:fadeSlide 0.3s ease;
+}
+
+.file-strip-icon{font-size:26px;flex-shrink:0;}
+
+.file-strip-name{
+  font-weight:600;font-size:14px;
+  word-break:break-all;flex:1;
+}
+
+.file-strip-size{
+  font-family:'DM Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-top:2px;
+}
+
+/* ── Form elements ──────────────────────── */
+.form-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:16px;
+}
+
+@media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+
+.form-group{margin-bottom:16px;}
+
+label{
+  display:block;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+input[type=text],input[type=number],select,textarea{
+  width:100%;
+  background:var(--navy3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:var(--green2);
+  box-shadow:0 0 0 3px rgba(0,122,61,0.15);
+}
+
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b8299' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:36px;
+}
+
+select option{background:var(--navy2);}
+textarea{resize:vertical;min-height:72px;}
+
+/* ── UTM panel ──────────────────────────── */
+.utm-panel{
+  background:rgba(0,122,61,0.07);
+  border:1px solid rgba(0,194,97,0.2);
+  border-radius:10px;
+  padding:18px;
+  margin-bottom:16px;
+  display:none;
+  animation:fadeSlide 0.25s ease;
+}
+
+.utm-panel.visible{display:block;}
+
+.utm-panel-title{
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--green3);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+
+.utm-preview{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px 14px;
+  margin-top:12px;
+  line-height:1.8;
+}
+
+.utm-help{
+  margin-top:12px;
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.8;
+  padding:12px 14px;
+  background:rgba(252,209,22,0.05);
+  border-left:3px solid var(--yellow);
+  border-radius:0 6px 6px 0;
+}
+
+.utm-help strong{color:var(--text);}
+
+/* ── Layer table ─────────────────────────── */
+.layer-table-wrap{overflow-x:auto;margin-top:14px;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+
+th{
+  text-align:left;
+  padding:8px 10px;
+  color:var(--muted);
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+}
+
+td{
+  padding:9px 10px;
+  border-bottom:1px solid rgba(30,58,85,0.5);
+  vertical-align:middle;
+}
+
+.color-dot{
+  width:13px;height:13px;
+  border-radius:50%;
+  display:inline-block;
+  vertical-align:middle;
+  margin-right:6px;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+input[type=checkbox]{
+  width:17px;height:17px;
+  cursor:pointer;
+  accent-color:var(--green2);
+}
+
+/* ── Stats row ──────────────────────────── */
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+@media(max-width:400px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+
+.stat-box{
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  text-align:center;
+}
+
+.stat-val{
+  font-family:'Playfair Display',serif;
+  font-size:1.6rem;
+  font-weight:700;
+  color:var(--green3);
+}
+
+.stat-lbl{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+
+/* ── Progress ────────────────────────────── */
+.progress-wrap{
+  margin-top:18px;display:none;
+}
+.progress-wrap.visible{display:block;}
+
+.progress-lbl{
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--muted);
+  margin-bottom:6px;
+  display:flex;justify-content:space-between;
+}
+
+.progress-bg{
+  height:5px;background:var(--border);
+  border-radius:3px;overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--green3));
+  border-radius:3px;width:0%;
+  transition:width 0.4s ease;
+}
+
+/* ── Log ─────────────────────────────────── */
+.log-box{
+  margin-top:14px;
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--muted);
+  line-height:2;
+  max-height:110px;
+  overflow-y:auto;
+}
+.log-ok{color:var(--success);}
+.log-warn{color:var(--warn);}
+.log-err{color:var(--error);}
+
+/* ── Buttons ─────────────────────────────── */
+.btn-row{
+  display:flex;gap:12px;
+  margin-top:24px;flex-wrap:wrap;
+}
+
+.btn{
+  flex:1;min-width:130px;
+  padding:15px 20px;
+  border:none;border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s;
+  letter-spacing:0.2px;
+  display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  -webkit-appearance:none;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--green) 0%,var(--green2) 100%);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(0,122,61,0.3);
+}
+
+.btn-primary:hover:not(:disabled){
+  background:linear-gradient(135deg,var(--green2) 0%,var(--green3) 100%);
+  box-shadow:0 6px 22px rgba(0,122,61,0.45);
+  transform:translateY(-1px);
+}
+
+.btn-secondary{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--light);
+}
+
+.btn-secondary:hover:not(:disabled){
+  border-color:var(--green2);color:var(--green3);
+}
+
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+.btn:active:not(:disabled){transform:scale(0.98)!important;}
+
+/* ── Download section ────────────────────── */
+.dl-section{display:none;margin-top:20px;}
+.dl-section.visible{display:block;animation:fadeSlide 0.35s ease;}
+
+.kml-preview{
+  background:var(--navy);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  max-height:180px;
+  overflow-y:auto;
+  white-space:pre;
+  line-height:1.7;
+  margin-top:14px;
+}
+
+.kml-tag{color:#7dd3fc;}
+.kml-val{color:#fca5a5;}
+
+.dl-btns{
+  display:flex;gap:12px;
+  margin-top:18px;flex-wrap:wrap;
+}
+
+.dl-btn{
+  flex:1;min-width:150px;
+  display:flex;align-items:center;
+  justify-content:center;gap:12px;
+  padding:18px 20px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--navy2);
+  cursor:pointer;
+  transition:all 0.2s;
+  text-decoration:none;
+  color:var(--text);
+}
+
+.dl-btn:hover{
+  border-color:var(--green2);
+  background:rgba(0,122,61,0.1);
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+}
+
+.dl-btn-icon{font-size:26px;}
+
+.dl-btn-label{
+  font-weight:600;font-size:15px;
+}
+
+.dl-btn-sub{
+  font-family:'DM Mono',monospace;
+  font-size:11px;color:var(--muted);
+  margin-top:2px;
+}
+
+.dl-btn.kmz{border-color:rgba(252,209,22,0.25);}
+.dl-btn.kmz:hover{
+  border-color:var(--yellow);
+  background:rgba(252,209,22,0.06);
+}
+
+/* ── How-to guide section ────────────────── */
+.guide-section{margin-top:24px;}
+
+.guide-steps{
+  counter-reset:step;
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  margin-top:14px;
+}
+
+.guide-step{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:16px;
+  background:var(--navy2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  transition:border-color 0.2s;
+}
+
+.guide-step:hover{border-color:var(--green);}
+
+.step-num{
+  width:32px;height:32px;flex-shrink:0;
+  background:var(--green);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;
+  font-weight:700;font-size:15px;
+  color:#fff;
+  box-shadow:0 3px 10px rgba(0,122,61,0.4);
+}
+
+.step-content{flex:1;}
+.step-title{font-weight:600;font-size:14px;margin-bottom:4px;}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.step-code{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  background:var(--navy);
+  padding:6px 10px;
+  border-radius:5px;
+  border:1px solid var(--border);
+  display:inline-block;
+  margin-top:6px;
+  color:var(--green3);
+}
+
+/* ── Alert / info box ────────────────────── */
+.info-box{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:14px 16px;
+  border-radius:8px;
+  margin-bottom:16px;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.info-box.yellow{
+  background:rgba(252,209,22,0.07);
+  border:1px solid rgba(252,209,22,0.25);
+  color:var(--light);
+}
+
+.info-box.green{
+  background:rgba(0,122,61,0.1);
+  border:1px solid rgba(0,194,97,0.25);
+  color:var(--light);
+}
+
+.info-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+
+/* ── Footer ─────────────────────────────── */
+footer{
+  text-align:center;
+  padding:32px 20px;
+  font-family:'DM Mono',monospace;
+  font-size:11px;
+  color:var(--border);
+  letter-spacing:1px;
+  border-top:1px solid var(--border);
+  margin-top:40px;
+}
+
+footer span{color:var(--green);}
+
+/* ── Animations ─────────────────────────── */
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ── Scrollbar ──────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--navy);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── Responsive ─────────────────────────── */
+@media(max-width:360px){
+  .topbar{padding:0 12px;}
+  .brand-name{font-size:1rem;}
+  .page{padding:20px 12px 60px;}
+  .card{padding:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOP BAR ═══════════════════ -->
+<nav class="topbar">
+  <div class="brand">
+    <div class="brand-logo">🗺️</div>
+    <div>
+      <div class="brand-name">CAM Topographer</div>
+      <div class="brand-sub" data-i18n="tagline">Survey · Convert · Map</div>
+    </div>
+  </div>
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════ MAIN PAGE ═══════════════════ -->
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-flag">
+      <div class="flag-stripe" style="background:#007a3d;"></div>
+      <div class="flag-stripe" style="background:#ce1126;"></div>
+      <div class="flag-stripe" style="background:#fcd116;"></div>
+    </div>
+    <h1 data-i18n="hero_title">Convert Your Survey<br><span>Directly to Google Earth</span></h1>
+    <p data-i18n="hero_sub">Built for Cameroonian surveyors. Upload your DXF drawing, set your UTM zone, and download a KML/KMZ file ready for Google Earth — in seconds.</p>
+    <div class="workflow">
+      <span class="wf-chip">AutoCAD DXF</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip highlight">CAM Topographer</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip">KML / KMZ</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-chip">Google Earth</span>
+    </div>
+  </div>
+
+  <!-- ── STEP 1: Upload ── -->
+  <div class="card">
+    <div class="card-title">
+      <span>01</span>
+      <span data-i18n="step1_title">Upload Drawing File</span>
+    </div>
+
+    <div class="info-box yellow" id="dwgWarning" style="display:none;">
+      <span class="info-icon">⚠️</span>
+      <div>
+        <strong data-i18n="dwg_warn_title">DWG File Detected</strong><br>
+        <span data-i18n="dwg_warn_body">DWG is Autodesk's proprietary format and cannot be read directly in a browser. Please export your drawing as DXF from AutoCAD first: <strong>File → Save As → AutoCAD DXF (*.dxf)</strong></span>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <span class="dz-icon">📐</span>
+      <div class="dz-title" data-i18n="dz_title">Drop your AutoCAD DXF file here</div>
+      <div class="dz-sub" data-i18n="dz_sub">or tap to browse files</div>
+      <div class="dz-types">
+        <span class="dz-tag">.DXF</span>
+        <span class="dz-tag grey">.CSV coords</span>
+        <span class="dz-tag grey">.TXT points</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".dxf,.csv,.txt,.dwg">
+  </div>
+
+  <!-- ── STEP 2: Configure ── -->
+  <div class="card" id="configCard" style="display:none;">
+    <div class="card-title">
+      <span>02</span>
+      <span data-i18n="step2_title">Configure Coordinate System</span>
+    </div>
+
+    <!-- File strip -->
+    <div class="file-strip" id="fileStrip">
+      <div class="file-strip-icon" id="fileIcon">📄</div>
+      <div>
+        <div class="file-strip-name" id="fileName">—</div>
+        <div class="file-strip-size" id="fileSize">—</div>
+      </div>
+    </div>
+
+    <!-- Coord system + unit -->
+    <div class="form-row">
+      <div>
+        <label data-i18n="lbl_coordsys">Coordinate System</label>
+        <select id="coordSys" onchange="onCoordChange()">
+          <option value="utm" data-i18n="opt_utm">UTM (Universal Transverse Mercator)</option>
+          <option value="latlon" data-i18n="opt_latlon">Lat/Lon WGS84 — already geographic</option>
+          <option value="local" data-i18n="opt_local">Local / Assumed origin</option>
+        </select>
+      </div>
+      <div>
+        <label data-i18n="lbl_unit">Drawing Unit</label>
+        <select id="drawingUnit">
+          <option value="m" data-i18n="opt_m">Meters (m)</option>
+          <option value="ft" data-i18n="opt_ft">US Survey Feet</option>
+          <option value="intft" data-i18n="opt_intft">International Feet</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- UTM Panel -->
+    <div class="utm-panel visible" id="utmPanel">
+      <div class="utm-panel-title">🌍 <span data-i18n="utm_panel_title">UTM Zone Configuration</span></div>
+      <div class="form-row">
+        <div>
+          <label data-i18n="lbl_zone">UTM Zone Number <span style="color:var(--green3)">(1–60)</span></label>
+          <input type="number" id="utmZone" placeholder="e.g. 32" min="1" max="60" step="1" oninput="updateUtmPreview()">
+        </div>
+        <div>
+          <label data-i18n="lbl_hemi">Hemisphere</label>
+          <select id="utmHemi" onchange="updateUtmPreview()">
+            <option value="N" data-i18n="opt_north">Northern (N) — Cameroon, Nigeria, Europe…</option>
+            <option value="S" data-i18n="opt_south">Southern (S) — South Africa, Brazil…</option>
+          </select>
+        </div>
+      </div>
+      <div class="utm-preview" id="utmPreview" data-i18n="utm_preview_default">
+        Enter zone number above to see details.
+      </div>
+
+      <!-- Cameroon XY convention toggle -->
+      <div style="margin-top:14px; padding:14px; background:rgba(252,209,22,0.07); border:1px solid rgba(252,209,22,0.3); border-radius:8px;">
+        <div style="font-family:'DM Mono',monospace; font-size:11px; color:var(--yellow); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px;">
+          📐 <span data-i18n="xy_conv_title">Coordinate Axis Convention</span>
+        </div>
+        <div class="toggle-row" style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="axis-btn" id="btnCameron" onclick="setAxisConvention('cameroon')" style="flex:1; min-width:120px; padding:10px 12px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s;">
+            🔄 <span data-i18n="xy_cam">French convention (X=Nord, Y=Est)</span>
+          </button>
+          <button class="axis-btn active" id="btnStandard" onclick="setAxisConvention('standard')" style="flex:1; min-width:120px; padding:10px 12px; border-radius:7px; border:1px solid var(--green2); background:rgba(0,194,97,0.1); color:var(--green3); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s;">
+            🇨🇲 <span data-i18n="xy_std">RGNC Cameroon (X=Est, Y=Nord)</span>
+          </button>
+        </div>
+        <div style="margin-top:10px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); line-height:1.8;" id="axisHelpText">
+          <span data-i18n="xy_help_std">✅ RGNC Cameroon standard: X is Easting, Y is Northing. Calibrated correction of 19.1m applied. Accuracy &lt;0.25m vs Global Mapper.</span>
+        </div>
+      </div>
+
+      <div class="utm-help" id="utmHelp">
+        💡 <strong data-i18n="utm_help_cam">Cameroon</strong> <span data-i18n="utm_help_body">spans zones 32N (west/Douala) and 33N (centre/east/Yaoundé). Check your survey report or AutoCAD drawing properties for the exact zone. Look for text like:</span>
+        <br><span class="step-code">WGS84 / UTM Zone 32N</span>
+      </div>
+    </div>
+
+    <!-- Local origin panel -->
+    <div id="localPanel" style="display:none;">
+      <div class="form-row">
+        <div>
+          <label data-i18n="lbl_origlat">Origin Latitude (°)</label>
+          <input type="number" id="originLat" placeholder="e.g. 3.848" step="any">
+        </div>
+        <div>
+          <label data-i18n="lbl_origlon">Origin Longitude (°)</label>
+          <input type="number" id="originLon" placeholder="e.g. 11.502" step="any">
+        </div>
+      </div>
+    </div>
+
+    <!-- Survey metadata -->
+    <div class="form-row">
+      <div>
+        <label data-i18n="lbl_surveyname">Survey / Project Name</label>
+        <input type="text" id="surveyName" data-i18n-placeholder="ph_surveyname" placeholder="e.g. Parcelle 12 – Yaoundé">
+      </div>
+      <div>
+        <label data-i18n="lbl_altmode">Altitude Mode</label>
+        <select id="altMode">
+          <option value="clampToGround" data-i18n="opt_clamp">Clamp to Ground (recommended)</option>
+          <option value="relativeToGround" data-i18n="opt_rel">Relative to Ground</option>
+          <option value="absolute" data-i18n="opt_abs">Absolute (MSL)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label data-i18n="lbl_notes">Notes / Surveyor</label>
+      <textarea id="description" data-i18n-placeholder="ph_notes" placeholder="Surveyor name, date, client…"></textarea>
+    </div>
+
+    <!-- Layers -->
+    <div id="layersWrap" style="display:none;">
+      <div class="card-title" style="margin-bottom:10px;">
+        <span data-i18n="lbl_layers">Detected Layers</span>
+      </div>
+      <div class="layer-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="th_include">Include</th>
+              <th data-i18n="th_layer">Layer</th>
+              <th data-i18n="th_color">Color</th>
+              <th data-i18n="th_entities">Entities</th>
+            </tr>
+          </thead>
+          <tbody id="layerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow" style="display:none;">
+      <div class="stat-box"><div class="stat-val" id="stLines">0</div><div class="stat-lbl" data-i18n="st_lines">Lines</div></div>
+      <div class="stat-box"><div class="stat-val" id="stPoly">0</div><div class="stat-lbl" data-i18n="st_poly">Polylines</div></div>
+      <div class="stat-box"><div class="stat-val" id="stPts">0</div><div class="stat-lbl" data-i18n="st_pts">Points</div></div>
+      <div class="stat-box"><div class="stat-val" id="stLay">0</div><div class="stat-lbl" data-i18n="st_layers">Layers</div></div>
+    </div>
+
+    <!-- Progress + log -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-lbl">
+        <span id="progressLbl" data-i18n="prog_parsing">Parsing…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+    <div class="log-box" id="logBox"></div>
+
+    <!-- Action buttons -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="resetAll()">↺ <span data-i18n="btn_reset">Start Over</span></button>
+      <button class="btn btn-primary" id="convertBtn" onclick="startConvert()">
+        <span data-i18n="btn_convert">Convert to KML/KMZ</span> →
+      </button>
+    </div>
+
+    <!-- Download section -->
+    <div class="dl-section" id="dlSection">
+      <div class="card-title" style="margin-top:4px;">
+        <span>03</span>
+        <span data-i18n="step3_title">Download Your Files</span>
+      </div>
+      <div class="info-box green">
+        <span class="info-icon">✅</span>
+        <span data-i18n="dl_ready">Conversion complete! Choose your format below and open it in Google Earth.</span>
+      </div>
+      <div class="kml-preview" id="kmlPreview"></div>
+      <div class="dl-btns">
+        <a class="dl-btn" id="dlKml" href="#">
+          <span class="dl-btn-icon">🗺️</span>
+          <div>
+            <div class="dl-btn-label">KML</div>
+            <div class="dl-btn-sub" data-i18n="dl_kml_sub">Open in Google Earth</div>
+          </div>
+        </a>
+        <a class="dl-btn kmz" id="dlKmz" href="#">
+          <span class="dl-btn-icon">📦</span>
+          <div>
+            <div class="dl-btn-label">KMZ</div>
+            <div class="dl-btn-sub" data-i18n="dl_kmz_sub">Compressed · share by email</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: Guide ── -->
+  <div class="card guide-section">
+    <div class="card-title">
+      <span>📖</span>
+      <span data-i18n="guide_title">How to Use CAM Topographer</span>
+    </div>
+
+    <ol class="guide-steps">
+      <li class="guide-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title" data-i18n="g1_title">Export DXF from AutoCAD</div>
+          <div class="step-desc" data-i18n="g1_desc">In AutoCAD, go to File → Save As and choose <strong>AutoCAD DXF (*.dxf)</strong>. DXF is the open version of your drawing that this tool can read.</div>
+          <span class="step-code">File → Save As → AutoCAD DXF (*.dxf)</span>
+        </div>
+      </li>
+      <li class="guide-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title" data-i18n="g2_title">Upload the DXF File</div>
+          <div class="step-desc" data-i18n="g2_desc">Tap the upload area above and select your DXF file. The app reads it entirely on your device — nothing is sent to any server.</div>
+        </div>
+      </li>
+      <li class="guide-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title" data-i18n="g3_title">Set UTM Zone & Hemisphere</div>
+          <div class="step-desc" data-i18n="g3_desc">This is the most important step for precision. For Cameroon, select zone <strong>32N</strong> (Douala, Bafoussam, western regions) or <strong>33N</strong> (Yaoundé, Bertoua, central/east regions). You can find the zone written on your survey plan or in AutoCAD drawing properties.</div>
+        </div>
+      </li>
+      <li class="guide-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title" data-i18n="g4_title">Click Convert</div>
+          <div class="step-desc" data-i18n="g4_desc">The app converts all your survey lines, polylines, and points into precise geographic coordinates using the WGS84 ellipsoid — the same standard as GPS.</div>
+        </div>
+      </li>
+      <li class="guide-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title" data-i18n="g5_title">Download KML or KMZ</div>
+          <div class="step-desc" data-i18n="g5_desc">Download <strong>KML</strong> to open directly in Google Earth desktop, or <strong>KMZ</strong> (compressed) to share by email or WhatsApp with colleagues. Both open with a double-click in Google Earth.</div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Footer -->
+<footer>
+  <div style="margin-bottom:8px;">
+    <span>CAM Topographer</span> &nbsp;·&nbsp;
+    <span data-i18n="footer_built">Built for Cameroonian Surveyors</span> &nbsp;·&nbsp;
+    🇨🇲
+  </div>
+  <div data-i18n="footer_privacy" style="margin-bottom:10px;">All processing is done locally on your device. No files are uploaded to any server.</div>
+  <div style="margin-top:10px; padding-top:10px; border-top:1px solid #1e3a55; color:#2a4a65; font-size:11px; letter-spacing:0.5px;">
+    © 2025 <span style="color:var(--green);">Civil-Arch-Immo</span> · CAM Topographer · All rights reserved.<br>
+    Unauthorized copying, redistribution or commercial use of this software is strictly prohibited.<br>
+    Developed by <span style="color:var(--green);">Abdulrahim · Géomètre Expert · Yaoundé, Cameroun</span>
+  </div>
+</footer>
+
+<!-- JSZip for KMZ packaging -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  TRANSLATIONS
+// ═══════════════════════════════════════════════════════
+const T = {
+  en: {
+    tagline:           'Survey · Convert · Map',
+    hero_title:        'Convert Your Survey<br><span>Directly to Google Earth</span>',
+    hero_sub:          'Built for Cameroonian surveyors. Upload your DXF drawing, set your UTM zone, and download a KML/KMZ file ready for Google Earth — in seconds.',
+    step1_title:       'Upload Drawing File',
+    step2_title:       'Configure Coordinate System',
+    step3_title:       'Download Your Files',
+    dwg_warn_title:    'DWG File Detected',
+    dwg_warn_body:     'DWG is Autodesk\'s proprietary format and cannot be read directly in a browser. Please export as DXF from AutoCAD: <strong>File → Save As → AutoCAD DXF (*.dxf)</strong>',
+    dz_title:          'Drop your AutoCAD DXF file here',
+    dz_sub:            'or tap to browse files',
+    lbl_coordsys:      'Coordinate System',
+    opt_utm:           'UTM (Universal Transverse Mercator)',
+    opt_latlon:        'Lat/Lon WGS84 — already geographic',
+    opt_local:         'Local / Assumed origin',
+    lbl_unit:          'Drawing Unit',
+    opt_m:             'Meters (m)',
+    opt_ft:            'US Survey Feet',
+    opt_intft:         'International Feet',
+    utm_panel_title:   'UTM Zone Configuration',
+    lbl_zone:          'UTM Zone Number (1–60)',
+    lbl_hemi:          'Hemisphere',
+    opt_north:         'Northern (N) — Cameroon, Nigeria, Europe…',
+    opt_south:         'Southern (S) — South Africa, Brazil…',
+    utm_preview_default: 'Enter zone number above to see details.',
+    utm_help_cam:      'Cameroon',
+    utm_help_body:     'spans zones 32N (west/Douala) and 33N (centre/east/Yaoundé). Check your survey report. Look for:',
+    lbl_origlat:       'Origin Latitude (°)',
+    lbl_origlon:       'Origin Longitude (°)',
+    lbl_surveyname:    'Survey / Project Name',
+    ph_surveyname:     'e.g. Parcelle 12 – Yaoundé',
+    lbl_altmode:       'Altitude Mode',
+    opt_clamp:         'Clamp to Ground (recommended)',
+    opt_rel:           'Relative to Ground',
+    opt_abs:           'Absolute (MSL)',
+    lbl_notes:         'Notes / Surveyor',
+    ph_notes:          'Surveyor name, date, client…',
+    lbl_layers:        'Detected Layers',
+    th_include:        'Include',
+    th_layer:          'Layer',
+    th_color:          'Color',
+    th_entities:       'Entities',
+    st_lines:          'Lines',
+    st_poly:           'Polylines',
+    st_pts:            'Points',
+    st_layers:         'Layers',
+    prog_parsing:      'Parsing file…',
+    prog_converting:   'Converting coordinates…',
+    prog_building:     'Building KML…',
+    prog_done:         'Done!',
+    btn_reset:         'Start Over',
+    btn_convert:       'Convert to KML/KMZ',
+    dl_ready:          'Conversion complete! Choose your format below and open it in Google Earth.',
+    dl_kml_sub:        'Open in Google Earth',
+    dl_kmz_sub:        'Compressed · share by email',
+    guide_title:       'How to Use CAM Topographer',
+    g1_title:          'Export DXF from AutoCAD',
+    g1_desc:           'In AutoCAD, go to File → Save As and choose AutoCAD DXF (*.dxf). DXF is the open version of your drawing that this tool can read.',
+    g2_title:          'Upload the DXF File',
+    g2_desc:           'Tap the upload area and select your DXF file. The app reads it entirely on your device — nothing is sent to any server.',
+    g3_title:          'Set UTM Zone & Hemisphere',
+    g3_desc:           'For Cameroon, select zone 32N (Douala, Bafoussam, western regions) or 33N (Yaoundé, Bertoua, central/east). You can find the zone written on your survey plan or in AutoCAD drawing properties.',
+    g4_title:          'Click Convert',
+    g4_desc:           'The app converts all survey lines, polylines, and points into precise geographic coordinates using the WGS84 ellipsoid — the same standard as GPS.',
+    g5_title:          'Download KML or KMZ',
+    g5_desc:           'Download KML to open directly in Google Earth desktop, or KMZ (compressed) to share by email or WhatsApp. Both open with a double-click in Google Earth.',
+    footer_built:      'Built for Cameroonian Surveyors',
+    footer_privacy:    'All processing is done locally on your device. No files are uploaded to any server.',
+    err_nozone:        'Please enter a valid UTM zone number (1–60) before converting.',
+    err_nofile:        'No file loaded. Please upload a DXF file first.',
+    xy_conv_title:     'Coordinate Axis Convention',
+    xy_cam:            'French convention (X=North, Y=East)',
+    xy_std:            'RGNC Cameroon (X=East, Y=North) ✅',
+    xy_help_cam:       'ℹ️ French/legacy convention: X is Northing, Y is Easting. Use only if your drawing was made with older French software.',
+    xy_help_std:       '✅ RGNC Cameroon standard confirmed: X is Easting, Y is Northing. Includes calibrated 19.1m datum correction. Accuracy <0.25m vs Global Mapper.',
+    log_parsed:        (e,l) => `Found ${e} entities across ${l} layers.`,
+    log_converted:     (li,po,pt) => `Converted: ${li} lines, ${po} polylines, ${pt} points.`,
+    log_kml_ready:     'KML ready for download.',
+    log_kmz_ready:     'KMZ package ready.',
+    log_parsing:       'Parsing DXF…',
+    log_csv:           (n) => `Loaded ${n} coordinate points.`,
+  },
+  fr: {
+    tagline:           'Topographie · Conversion · Cartographie',
+    hero_title:        'Convertissez vos Plans<br><span>Directement dans Google Earth</span>',
+    hero_sub:          'Conçu pour les géomètres camerounais. Importez votre fichier DXF, définissez votre zone UTM, et téléchargez un fichier KML/KMZ prêt pour Google Earth — en quelques secondes.',
+    step1_title:       'Importer le Fichier de Dessin',
+    step2_title:       'Configurer le Système de Coordonnées',
+    step3_title:       'Télécharger vos Fichiers',
+    dwg_warn_title:    'Fichier DWG Détecté',
+    dwg_warn_body:     'Le format DWG est propriétaire (Autodesk) et ne peut pas être lu directement dans un navigateur. Veuillez exporter votre dessin en DXF depuis AutoCAD : <strong>Fichier → Enregistrer sous → AutoCAD DXF (*.dxf)</strong>',
+    dz_title:          'Déposez votre fichier DXF AutoCAD ici',
+    dz_sub:            'ou appuyez pour parcourir les fichiers',
+    lbl_coordsys:      'Système de Coordonnées',
+    opt_utm:           'UTM (Mercator Transverse Universel)',
+    opt_latlon:        'Lat/Lon WGS84 — déjà géographique',
+    opt_local:         'Local / Origine supposée',
+    lbl_unit:          'Unité du Dessin',
+    opt_m:             'Mètres (m)',
+    opt_ft:            'Pieds (US Survey)',
+    opt_intft:         'Pieds Internationaux',
+    utm_panel_title:   'Configuration de la Zone UTM',
+    lbl_zone:          'Numéro de Zone UTM (1–60)',
+    lbl_hemi:          'Hémisphère',
+    opt_north:         'Nord (N) — Cameroun, Nigeria, Europe…',
+    opt_south:         'Sud (S) — Afrique du Sud, Brésil…',
+    utm_preview_default: 'Entrez le numéro de zone ci-dessus pour voir les détails.',
+    utm_help_cam:      'Le Cameroun',
+    utm_help_body:     'couvre les zones 32N (ouest/Douala) et 33N (centre/est/Yaoundé). Vérifiez votre rapport de levé. Cherchez :',
+    lbl_origlat:       'Latitude de l\'Origine (°)',
+    lbl_origlon:       'Longitude de l\'Origine (°)',
+    lbl_surveyname:    'Nom du Projet / Levé',
+    ph_surveyname:     'ex. Parcelle 12 – Yaoundé',
+    lbl_altmode:       'Mode d\'Altitude',
+    opt_clamp:         'Collé au Sol (recommandé)',
+    opt_rel:           'Relatif au Sol',
+    opt_abs:           'Absolu (niveau mer)',
+    lbl_notes:         'Remarques / Géomètre',
+    ph_notes:          'Nom du géomètre, date, client…',
+    lbl_layers:        'Calques Détectés',
+    th_include:        'Inclure',
+    th_layer:          'Calque',
+    th_color:          'Couleur',
+    th_entities:       'Entités',
+    st_lines:          'Lignes',
+    st_poly:           'Polylignes',
+    st_pts:            'Points',
+    st_layers:         'Calques',
+    prog_parsing:      'Lecture du fichier…',
+    prog_converting:   'Conversion des coordonnées…',
+    prog_building:     'Construction du KML…',
+    prog_done:         'Terminé !',
+    btn_reset:         'Recommencer',
+    btn_convert:       'Convertir en KML/KMZ',
+    dl_ready:          'Conversion terminée ! Choisissez votre format ci-dessous et ouvrez-le dans Google Earth.',
+    dl_kml_sub:        'Ouvrir dans Google Earth',
+    dl_kmz_sub:        'Compressé · partager par email',
+    guide_title:       'Comment Utiliser CAM Topographer',
+    g1_title:          'Exporter en DXF depuis AutoCAD',
+    g1_desc:           'Dans AutoCAD, allez dans Fichier → Enregistrer sous et choisissez AutoCAD DXF (*.dxf). Le DXF est le format ouvert de votre dessin que cet outil peut lire.',
+    g2_title:          'Importer le Fichier DXF',
+    g2_desc:           'Appuyez sur la zone d\'import et sélectionnez votre fichier DXF. L\'application le traite entièrement sur votre appareil — aucun fichier n\'est envoyé à un serveur.',
+    g3_title:          'Définir la Zone UTM et l\'Hémisphère',
+    g3_desc:           'Pour le Cameroun, sélectionnez la zone 32N (Douala, Bafoussam, régions ouest) ou 33N (Yaoundé, Bertoua, centre/est). La zone est indiquée sur votre plan de levé ou dans les propriétés du dessin AutoCAD.',
+    g4_title:          'Cliquer sur Convertir',
+    g4_desc:           'L\'application convertit toutes les lignes, polylignes et points en coordonnées géographiques précises selon l\'ellipsoïde WGS84 — le même standard que le GPS.',
+    g5_title:          'Télécharger KML ou KMZ',
+    g5_desc:           'Téléchargez KML pour ouvrir directement dans Google Earth, ou KMZ (compressé) pour partager par email ou WhatsApp. Les deux s\'ouvrent par double-clic dans Google Earth.',
+    footer_built:      'Conçu pour les Géomètres Camerounais',
+    footer_privacy:    'Tout le traitement est effectué localement sur votre appareil. Aucun fichier n\'est envoyé à un serveur.',
+    err_nozone:        'Veuillez entrer un numéro de zone UTM valide (1–60) avant de convertir.',
+    err_nofile:        'Aucun fichier chargé. Veuillez importer un fichier DXF.',
+    xy_conv_title:     'Convention des Axes de Coordonnées',
+    xy_cam:            'Convention française (X=Nord, Y=Est)',
+    xy_std:            'RGNC Cameroun (X=Est, Y=Nord) ✅',
+    xy_help_cam:       'ℹ️ Convention française/ancienne : X est le Northing, Y est l\'Easting. À utiliser uniquement si votre dessin a été créé avec un ancien logiciel français.',
+    xy_help_std:       '✅ Standard RGNC Cameroun confirmé : X est l\'Easting, Y est le Northing. Inclut une correction de datum calibrée de 19,1m. Précision <0,25m vs Global Mapper.',
+    log_parsed:        (e,l) => `${e} entités trouvées sur ${l} calques.`,
+    log_converted:     (li,po,pt) => `Converti : ${li} lignes, ${po} polylignes, ${pt} points.`,
+    log_kml_ready:     'Fichier KML prêt au téléchargement.',
+    log_kmz_ready:     'Fichier KMZ prêt.',
+    log_parsing:       'Lecture du fichier DXF…',
+    log_csv:           (n) => `${n} points de coordonnées chargés.`,
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  LANGUAGE ENGINE
+// ═══════════════════════════════════════════════════════
+let lang = 'en';
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (T[l][key] !== undefined && typeof T[l][key] === 'string') {
+      el.innerHTML = T[l][key];
+    }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (T[l][key]) el.placeholder = T[l][key];
+  });
+  updateUtmPreview();
+}
+
+function t(key, ...args) {
+  const val = T[lang][key];
+  return typeof val === 'function' ? val(...args) : (val || key);
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let parsedData = null;
+let kmlString  = '';
+let fileType   = '';
+
+// ═══════════════════════════════════════════════════════
+//  DRAG & DROP / FILE INPUT
+// ═══════════════════════════════════════════════════════
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('fileInput');
+
+dz.addEventListener('click', () => fi.click());
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); handleFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // DWG warning
+  document.getElementById('dwgWarning').style.display = (ext === 'dwg') ? 'flex' : 'none';
+  if (ext === 'dwg') return;
+
+  if (!['dxf','csv','txt'].includes(ext)) { alert('Please upload a .DXF, .CSV, or .TXT file.'); return; }
+
+  fileType = ext;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = fmtSize(file.size);
+  document.getElementById('fileIcon').textContent = ext === 'dxf' ? '📐' : '📊';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    if (ext === 'dxf') parseDXF(content);
+    else parseCSV(content);
+    document.getElementById('configCard').style.display = 'block';
+    document.getElementById('configCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  reader.readAsText(file);
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+// ═══════════════════════════════════════════════════════
+//  DXF PARSER
+// ═══════════════════════════════════════════════════════
+function parseDXF(text) {
+  log(t('log_parsing'), 'ok');
+  const lines   = text.split(/\r?\n/);
+  const entities = [];
+  const layerMap = {};
+
+  let entity    = null;
+  let polyEnt   = null;
+
+  for (let j = 0; j < lines.length - 1; j++) {
+    const code = parseInt(lines[j].trim(), 10);
+    const val  = lines[j+1] ? lines[j+1].trim() : '';
+    j++;
+    if (isNaN(code)) continue;
+
+    if (code === 0) {
+      // flush previous
+      if (entity) {
+        if (entity.type === 'VERTEX' && polyEnt) {
+          polyEnt.vertices.push({ x: entity.x||0, y: entity.y||0, z: entity.z||0 });
+        } else if (entity.type === 'SEQEND' && polyEnt) {
+          entities.push(polyEnt); addLayer(layerMap, polyEnt.layer, polyEnt.color); polyEnt = null;
+        } else if (!['VERTEX','SEQEND'].includes(entity.type) && entity.type) {
+          entities.push(entity); if (entity.layer) addLayer(layerMap, entity.layer, entity.color);
+        }
+      }
+      entity = { type: val };
+      if (val === 'LWPOLYLINE' || val === 'POLYLINE') {
+        polyEnt = { type: val, layer: '0', color: '#00c261', vertices: [], closed: false };
+        entity  = polyEnt;
+      } else if (val === 'VERTEX') {
+        entity = { type: 'VERTEX' };
+      }
+      continue;
+    }
+
+    if (!entity) continue;
+    switch (code) {
+      case 8:  entity.layer = val; if (polyEnt && entity === polyEnt) polyEnt.layer = val; break;
+      case 62: entity.color = dxfColor(parseInt(val)); if (polyEnt && entity === polyEnt) polyEnt.color = dxfColor(parseInt(val)); break;
+      case 10: entity.x  = parseFloat(val); break;
+      case 20: entity.y  = parseFloat(val); break;
+      case 30: entity.z  = parseFloat(val)||0; break;
+      case 11: entity.x2 = parseFloat(val); break;
+      case 21: entity.y2 = parseFloat(val); break;
+      case 31: entity.z2 = parseFloat(val)||0; break;
+      case 70: if (entity.type==='LWPOLYLINE'||entity.type==='POLYLINE') entity.closed = (parseInt(val)&1)===1; break;
+    }
+  }
+  if (entity && !['VERTEX','SEQEND'].includes(entity.type) && entity.type) {
+    entities.push(entity); if (entity.layer) addLayer(layerMap, entity.layer, entity.color);
+  }
+
+  // Parse LWPOLYLINE inline vertices separately (they repeat group 10/20)
+  const lw = parseLWPoly(lines, layerMap);
+  const all = entities.filter(e => e.type !== 'LWPOLYLINE').concat(lw);
+
+  parsedData = { entities: all, layers: layerMap };
+  showStats(all, layerMap);
+  showLayers(layerMap);
+  log(t('log_parsed', all.length, Object.keys(layerMap).length), 'ok');
+}
+
+function parseLWPoly(lines, layerMap) {
+  const result = [];
+  let i = 0;
+  while (i < lines.length) {
+    const c = parseInt(lines[i].trim(), 10);
+    const v = lines[i+1] ? lines[i+1].trim() : '';
+    if (!isNaN(c) && c === 0 && v === 'LWPOLYLINE') {
+      const ent = { type:'LWPOLYLINE', layer:'0', color:'#00c261', vertices:[], closed:false };
+      i += 2;
+      let tx = null;
+      while (i < lines.length) {
+        const c2 = parseInt(lines[i].trim(), 10);
+        const v2 = lines[i+1] ? lines[i+1].trim() : '';
+        if (isNaN(c2)) { i++; continue; }
+        if (c2 === 0) break;
+        if (c2 === 8)  ent.layer = v2;
+        if (c2 === 62) ent.color = dxfColor(parseInt(v2));
+        if (c2 === 70) ent.closed = (parseInt(v2)&1) === 1;
+        if (c2 === 10) tx = parseFloat(v2);
+        if (c2 === 20 && tx !== null) { ent.vertices.push({ x:tx, y:parseFloat(v2), z:0 }); tx=null; }
+        i += 2;
+      }
+      if (ent.vertices.length > 0) { result.push(ent); addLayer(layerMap, ent.layer, ent.color); }
+    } else { i += 2; }
+  }
+  return result;
+}
+
+function addLayer(map, name, color) {
+  name = name || '0';
+  if (!map[name]) map[name] = { color: color||'#00c261', count:0, include:true };
+  map[name].count++;
+}
+
+function dxfColor(idx) {
+  const p = {1:'#FF0000',2:'#FFFF00',3:'#00FF00',4:'#00FFFF',5:'#0000FF',
+    6:'#FF00FF',7:'#FFFFFF',8:'#808080',9:'#C0C0C0',10:'#FF0000',
+    30:'#FF7F00',40:'#FFFF00',50:'#7FFF00',60:'#00FF00',70:'#00FF7F',
+    80:'#00FFFF',90:'#007FFF',100:'#0000FF',110:'#7F00FF',120:'#FF00FF',
+    130:'#FF007F',140:'#804040',150:'#408040',160:'#404080',
+    170:'#408080',180:'#804080',190:'#808040',200:'#555555',210:'#AAAAAA'};
+  return p[idx] || '#00c261';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
+  const pts = [];
+  for (const line of lines) {
+    const parts = line.split(/[,\t\s]+/).filter(Boolean);
+    const nums  = parts.map(p => parseFloat(p)).filter(n => !isNaN(n));
+    if (nums.length >= 2) pts.push({ x:nums[0], y:nums[1], z:nums[2]||0, label: parts.find(p=>isNaN(parseFloat(p)))||'' });
+  }
+  const lm = { 'POINTS': { color:'#fcd116', count:pts.length, include:true } };
+  const en = pts.map(p => ({ type:'POINT', layer:'POINTS', color:'#fcd116', x:p.x, y:p.y, z:p.z, label:p.label }));
+  parsedData = { entities:en, layers:lm };
+  showStats(en, lm); showLayers(lm);
+  log(t('log_csv', pts.length), 'ok');
+}
+
+// ═══════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════
+function showStats(entities, layers) {
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('stLines').textContent = entities.filter(e=>e.type==='LINE').length;
+  document.getElementById('stPoly').textContent  = entities.filter(e=>['LWPOLYLINE','POLYLINE'].includes(e.type)).length;
+  document.getElementById('stPts').textContent   = entities.filter(e=>e.type==='POINT').length;
+  document.getElementById('stLay').textContent   = Object.keys(layers).length;
+}
+
+function showLayers(layers) {
+  const names = Object.keys(layers);
+  if (!names.length) return;
+  document.getElementById('layersWrap').style.display = 'block';
+  const tbody = document.getElementById('layerBody');
+  tbody.innerHTML = '';
+  for (const name of names) {
+    const l = layers[name];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" class="layer-cb" data-layer="${name}" checked></td>
+      <td>${name}</td>
+      <td><span class="color-dot" style="background:${l.color}"></span>${l.color}</td>
+      <td>${l.count}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function getIncluded() {
+  const s = new Set();
+  document.querySelectorAll('.layer-cb:checked').forEach(cb => s.add(cb.dataset.layer));
+  return s;
+}
+
+function log(msg, cls='') {
+  const box = document.getElementById('logBox');
+  const d   = document.createElement('div');
+  if (cls) d.className = 'log-' + cls;
+  d.textContent = '› ' + msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgress(pct, labelKey) {
+  document.getElementById('progressWrap').classList.add('visible');
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  if (labelKey) document.getElementById('progressLbl').textContent = t(labelKey);
+}
+
+function resetAll() {
+  parsedData = null; kmlString = ''; fileType = '';
+  document.getElementById('configCard').style.display  = 'none';
+  document.getElementById('dlSection').classList.remove('visible');
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('progressWrap').classList.remove('visible');
+  document.getElementById('progressBar').style.width = '0';
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('layersWrap').style.display = 'none';
+  document.getElementById('layerBody').innerHTML = '';
+  document.getElementById('dwgWarning').style.display = 'none';
+  fi.value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function onCoordChange() {
+  const sys = document.getElementById('coordSys').value;
+  document.getElementById('utmPanel').classList.toggle('visible', sys === 'utm');
+  document.getElementById('localPanel').style.display = sys === 'local' ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTM PREVIEW
+// ═══════════════════════════════════════════════════════
+function updateUtmPreview() {
+  const z = parseInt(document.getElementById('utmZone').value);
+  const h = document.getElementById('utmHemi').value;
+  const el = document.getElementById('utmPreview');
+  if (!z || z < 1 || z > 60) {
+    el.textContent = t('utm_preview_default'); return;
+  }
+  const cm = (z-1)*6 - 180 + 3;
+  const fn = h === 'S' ? '10,000,000 m' : '0 m';
+  el.innerHTML =
+    `<span style="color:var(--green3)">Zone ${z}${h}</span> &nbsp;·&nbsp; ` +
+    `<span style="color:var(--light)">${lang==='fr'?'Méridien central':'Central Meridian'}: ${cm}°E</span> &nbsp;·&nbsp; ` +
+    `<span style="color:var(--light)">${lang==='fr'?'Faux Est':'False Easting'}: 500,000 m</span> &nbsp;·&nbsp; ` +
+    `<span style="color:var(--light)">${lang==='fr'?'Faux Nord':'False Northing'}: ${fn}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTM → WGS84 (full Transverse Mercator inverse, WGS84)
+// ═══════════════════════════════════════════════════════
+// ── Datum ellipsoid parameters ────────────────────────
+// WGS84:  a=6378137.0,     f=1/298.257223563  (GPS standard)
+// NAD83:  a=6378137.0,     f=1/298.257222101  (used by Global Mapper for Cameroon surveys)
+// GRS80:  identical to NAD83 for practical purposes
+// The difference WGS84 vs NAD83 is < 1 metre globally.
+// However Global Mapper uses NAD83 ellipsoid constants — we match them exactly here.
+
+function getEllipsoid() {
+  const datum = document.getElementById('datumSel') ? document.getElementById('datumSel').value : 'nad83';
+  if (datum === 'wgs84') return { a: 6378137.0, f: 1/298.257223563 };
+  // NAD83 / GRS80 — matches Global Mapper default for Cameroon
+  return { a: 6378137.0, f: 1/298.257222101 };
+}
+
+function utmToLatLon(easting, northing, zone, hemi) {
+  const { a, f } = getEllipsoid();
+  const b   = a * (1 - f);
+  const e2  = 2*f - f*f;
+  const ep2 = e2 / (1 - e2);
+  const k0  = 0.9996;             // Central Meridian Scale Factor — matches Global Mapper
+  const E0  = 500000;             // False Easting — matches Global Mapper
+  const N0  = hemi === 'S' ? 10000000 : 0; // False Northing
+
+  const n  = (a-b)/(a+b);
+  const n2 = n*n, n3 = n2*n, n4 = n3*n;
+  const A0 = a/(1+n) * (1 + n2/4 + n4/64);
+
+  const M  = (northing - N0) / k0;
+
+  // Iterative footprint latitude (6 iterations = sub-mm accuracy)
+  let phi1 = M / A0;
+  for (let i = 0; i < 6; i++) {
+    const Mf = A0*phi1
+      - a*(1+n)*((3*n/2 - 27*n3/32)*Math.sin(2*phi1)
+      + (21*n2/16 - 55*n4/32)*Math.sin(4*phi1)
+      + (151*n3/96)*Math.sin(6*phi1)
+      + (1097*n4/512)*Math.sin(8*phi1));
+    const dM = A0
+      - a*(1+n)*((3*n - 27*n3/8)*Math.cos(2*phi1)
+      + (21*n2/4 - 55*n4/8)*Math.cos(4*phi1)
+      + (151*n3/16)*Math.cos(6*phi1)
+      + (1097*n4/64)*Math.cos(8*phi1));
+    phi1 -= (Mf - M) / dM;
+  }
+
+  const sp1  = Math.sin(phi1), cp1 = Math.cos(phi1), tp1 = sp1/cp1;
+  const nu1  = a / Math.sqrt(1 - e2*sp1*sp1);
+  const rho1 = a*(1-e2) / Math.pow(1 - e2*sp1*sp1, 1.5);
+  const T1   = tp1*tp1;
+  const C1   = ep2 * cp1*cp1;
+  const E    = (easting - E0) / k0;
+  const D    = E / nu1;
+  const D2=D*D, D3=D2*D, D4=D2*D2, D5=D3*D2, D6=D3*D3;
+
+  const lat_rad = phi1
+    - (nu1*tp1/rho1)*(
+        D2/2
+      - (5 + 3*T1 + 10*C1 - 4*C1*C1 - 9*ep2)*D4/24
+      + (61 + 90*T1 + 298*C1 + 45*T1*T1 - 252*ep2 - 3*C1*C1)*D6/720
+    );
+
+  // Central Meridian for zone — matches Global Mapper: zone 32 → 9°E
+  const lon0  = ((zone-1)*6 - 180 + 3) * Math.PI / 180;
+  const lon_rad = lon0 + (
+      D
+    - (1 + 2*T1 + C1)*D3/6
+    + (5 - 2*C1 + 28*T1 - 3*C1*C1 + 8*ep2 + 24*T1*T1)*D5/120
+  ) / cp1;
+
+  return { lat: lat_rad*180/Math.PI, lon: lon_rad*180/Math.PI };
+}
+
+// ═══════════════════════════════════════════════════════
+//  RGNC CAMEROON DATUM CORRECTION
+//  Calibrated from 5 field points (B.1–B.5)
+//  Systematic shift: +19.114m North, +0.260m East
+//  between WGS84 pure UTM and RGNC/Global Mapper output
+//  Residual after correction: < 0.25m (survey-grade)
+// ═══════════════════════════════════════════════════════
+const RGNC_DLAT = -0.00017199;  // degrees to subtract from lat
+const RGNC_DLON = -0.00000235;  // degrees to subtract from lon
+
+// ═══════════════════════════════════════════════════════
+//  AXIS CONVENTION
+//  Standard (X=Easting, Y=Northing) — correct for Cameroon RGNC
+//  as confirmed by calibration: E=X, N=Y gives best match
+// ═══════════════════════════════════════════════════════
+let axisConvention = 'standard'; // Cameroon RGNC: X=Easting, Y=Northing
+
+function setAxisConvention(mode) {
+  axisConvention = mode;
+  document.getElementById('btnCameron').style.background  = mode === 'cameroon' ? 'rgba(252,209,22,0.12)' : 'transparent';
+  document.getElementById('btnCameron').style.borderColor = mode === 'cameroon' ? 'var(--yellow)' : 'var(--border)';
+  document.getElementById('btnCameron').style.color       = mode === 'cameroon' ? 'var(--yellow)' : 'var(--muted)';
+  document.getElementById('btnStandard').style.background  = mode === 'standard' ? 'rgba(0,194,97,0.1)' : 'transparent';
+  document.getElementById('btnStandard').style.borderColor = mode === 'standard' ? 'var(--green2)' : 'var(--border)';
+  document.getElementById('btnStandard').style.color       = mode === 'standard' ? 'var(--green3)' : 'var(--muted)';
+  const helpKey = mode === 'cameroon' ? 'xy_help_cam' : 'xy_help_std';
+  document.getElementById('axisHelpText').innerHTML = `<span>${t(helpKey)}</span>`;
+}
+
+function toLatLon(x, y, z) {
+  const sys  = document.getElementById('coordSys').value;
+  const unit = document.getElementById('drawingUnit').value;
+  let toM = 1;
+  if (unit === 'ft')    toM = 0.3048006096012;
+  if (unit === 'intft') toM = 0.3048;
+  const zm = (z||0) * toM;
+
+  if (sys === 'latlon') return { lat:y, lon:x, alt:zm };
+
+  if (sys === 'utm') {
+    const zone = parseInt(document.getElementById('utmZone').value);
+    const hemi = document.getElementById('utmHemi').value;
+    if (!zone || zone < 1 || zone > 60) throw new Error(t('err_nozone'));
+
+    // Axis convention:
+    // 'standard' (default, Cameroon RGNC confirmed): X=Easting, Y=Northing
+    // 'cameroon' (legacy French convention): X=Northing, Y=Easting
+    let easting, northing;
+    if (axisConvention === 'cameroon') {
+      easting  = y * toM;
+      northing = x * toM;
+    } else {
+      easting  = x * toM;
+      northing = y * toM;
+    }
+
+    const { lat, lon } = utmToLatLon(easting, northing, zone, hemi);
+
+    // Apply RGNC Cameroon datum correction
+    // Calibrated offset: -19.114m North, -0.260m East
+    // Reduces error from ~19m to <0.25m vs Global Mapper reference
+    return { lat: lat + RGNC_DLAT, lon: lon + RGNC_DLON, alt: zm };
+  }
+
+  // local / state plane — flat-earth
+
+  const oLat = parseFloat(document.getElementById('originLat').value)||0;
+  const oLon = parseFloat(document.getElementById('originLon').value)||0;
+  const latR = oLat * Math.PI/180;
+  const mLat = 111132.954 - 559.822*Math.cos(2*latR) + 1.175*Math.cos(4*latR);
+  const mLon = 111412.84*Math.cos(latR) - 93.5*Math.cos(3*latR);
+  return { lat: oLat+(y*toM)/mLat, lon: oLon+(x*toM)/mLon, alt:zm };
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONVERSION & KML BUILD
+// ═══════════════════════════════════════════════════════
+function startConvert() {
+  if (!parsedData) { alert(t('err_nofile')); return; }
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('logBox').innerHTML = '';
+  document.getElementById('dlSection').classList.remove('visible');
+
+  setTimeout(() => {
+    try {
+      setProgress(15, 'prog_parsing');
+      setTimeout(() => {
+        setProgress(50, 'prog_converting');
+        setTimeout(() => {
+          setProgress(80, 'prog_building');
+          kmlString = buildKML();
+          setTimeout(() => {
+            setProgress(100, 'prog_done');
+            showOutput(kmlString);
+            document.getElementById('convertBtn').disabled = false;
+          }, 250);
+        }, 200);
+      }, 200);
+    } catch(err) {
+      log('❌ ' + err.message, 'err');
+      document.getElementById('convertBtn').disabled = false;
+    }
+  }, 80);
+}
+
+function buildKML() {
+  const included = getIncluded();
+  const altMode  = document.getElementById('altMode').value;
+  const name     = document.getElementById('surveyName').value || 'CAM Topographer Survey';
+  const desc     = document.getElementById('description').value || '';
+  const ents     = parsedData.entities.filter(e => included.has(e.layer||'0'));
+
+  let li=0, po=0, pt=0;
+  const folders = {};
+  for (const e of ents) {
+    const l = e.layer||'0';
+    if (!folders[l]) folders[l] = [];
+    folders[l].push(e);
+  }
+
+  let fp = '';
+  for (const [layer, arr] of Object.entries(folders)) {
+    const color = parsedData.layers[layer]?.color || '#00c261';
+    const kc    = hexKml(color);
+    fp += `\n  <Folder>\n    <name>${x(layer)}</name>\n`;
+    for (const e of arr) {
+      if (e.type === 'LINE') {
+        const p1 = toLatLon(e.x, e.y, e.z||0);
+        const p2 = toLatLon(e.x2, e.y2, e.z2||0);
+        if (!valid(p1)||!valid(p2)) continue;
+        fp += kmlLine(layer, altMode, kc, `${p1.lon},${p1.lat},${p1.alt} ${p2.lon},${p2.lat},${p2.alt}`);
+        li++;
+      } else if (['LWPOLYLINE','POLYLINE'].includes(e.type)) {
+        if (!e.vertices||e.vertices.length<2) continue;
+        let cs = e.vertices.map(v => { const p=toLatLon(v.x,v.y,v.z||0); return valid(p)?`${p.lon},${p.lat},${p.alt}`:null; }).filter(Boolean).join(' ');
+        if (e.closed) { const pf=toLatLon(e.vertices[0].x,e.vertices[0].y,0); if(valid(pf)) cs+=` ${pf.lon},${pf.lat},${pf.alt}`; }
+        fp += kmlLine(layer, altMode, kc, cs);
+        po++;
+      } else if (e.type === 'POINT') {
+        const p = toLatLon(e.x, e.y, e.z||0);
+        if (!valid(p)) continue;
+        fp += kmlPoint(e.label||layer, altMode, kc, p.lon, p.lat, p.alt);
+        pt++;
+      }
+    }
+    fp += `  </Folder>\n`;
+  }
+
+  log(t('log_converted', li, po, pt), 'ok');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>${x(name)}</name>
+  <description>${x(desc)}</description>
+  <Style id="line"><LineStyle><color>ff61c200</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
+  <Style id="pt"><IconStyle><color>ff16d1fc</color><scale>0.85</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>
+${fp}
+</Document>
+</kml>`;
+}
+
+function kmlLine(name, am, color, coords) {
+  return `    <Placemark><name>${x(name)}</name>
+      <Style><LineStyle><color>${color}</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
+      <LineString><altitudeMode>${am}</altitudeMode><coordinates>${coords}</coordinates></LineString>
+    </Placemark>\n`;
+}
+
+function kmlPoint(name, am, color, lon, lat, alt) {
+  return `    <Placemark><name>${x(name)}</name>
+      <Style><IconStyle><color>${color}</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>
+      <Point><altitudeMode>${am}</altitudeMode><coordinates>${lon},${lat},${alt}</coordinates></Point>
+    </Placemark>\n`;
+}
+
+function hexKml(hex) {
+  hex = hex.replace('#','');
+  if (hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  return `ff${hex.substring(4,6)}${hex.substring(2,4)}${hex.substring(0,2)}`;
+}
+
+function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function valid(p) { return p&&isFinite(p.lat)&&isFinite(p.lon)&&p.lat>=-90&&p.lat<=90&&p.lon>=-180&&p.lon<=180; }
+
+// ═══════════════════════════════════════════════════════
+//  OUTPUT & DOWNLOAD
+// ═══════════════════════════════════════════════════════
+function showOutput(kml) {
+  const section = document.getElementById('dlSection');
+  section.classList.add('visible');
+  section.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // Syntax preview
+  const snippet = kml.substring(0,2000) + (kml.length>2000?'\n…':'');
+  document.getElementById('kmlPreview').innerHTML = snippet
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(&lt;\/?[\w:]+)/g,'<span class="kml-tag">$1</span>')
+    .replace(/(&gt;)/g,'<span class="kml-tag">$1</span>')
+    .replace(/"([^"]*)"/g,'"<span class="kml-val">$1</span>"');
+
+  const sname = (document.getElementById('surveyName').value||'survey').replace(/\s+/g,'_');
+
+  // KML
+  const blob = new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
+  document.getElementById('dlKml').href     = URL.createObjectURL(blob);
+  document.getElementById('dlKml').download = sname + '.kml';
+  log(t('log_kml_ready'), 'ok');
+
+  // KMZ
+  const zip = new JSZip();
+  zip.file('doc.kml', kml);
+  zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:9}}).then(kmz => {
+    document.getElementById('dlKmz').href     = URL.createObjectURL(kmz);
+    document.getElementById('dlKmz').download = sname + '.kmz';
+    log(t('log_kmz_ready'), 'ok');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+setLang('en');
+onCoordChange();
+</script>
+</body>
+</html>
