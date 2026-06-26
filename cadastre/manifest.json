@@ -1,0 +1,26 @@
+[
+  {
+    "departement": "LÉKIÉ",
+    "filename": "LEKIE_2026-01-15.geojson",
+    "snapshot_date": "2026-01-15",
+    "parcel_count": 3308,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MEFOU-ET-AKONO",
+    "filename": "MEFOU-ET-AKONO_2025-01-27.geojson",
+    "snapshot_date": "2025-01-27",
+    "parcel_count": 3010,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25.geojson",
+    "snapshot_date": "2024-11-25",
+    "parcel_count": 10450,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  }
+]
