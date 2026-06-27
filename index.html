@@ -1401,56 +1401,86 @@ footer span{color:var(--brand-orange);}
     <div class="info-box yellow">
       <span class="info-icon">⚠️</span>
       <div style="font-size:12px;" data-i18n="cadastre_disclaimer">
-        This lookup is for information only. It does not constitute an official cadastral document. For any legal or administrative use, refer to MINDCAF for official verification. — Cette recherche est fournie à titre informatif uniquement. Elle ne constitue pas un document cadastral officiel. Pour tout usage juridique ou administratif, référez-vous au MINDCAF pour une vérification officielle.
+        For information only. Not an official cadastral document. Refer to MINDCAF for official verification. — À titre informatif uniquement. Référez-vous au MINDCAF pour vérification officielle.
       </div>
     </div>
 
     <!-- Division selector -->
-    <div class="form-row" style="margin-bottom:16px;">
+    <div class="form-row" style="margin-bottom:14px;">
       <div>
         <label data-i18n="cadastre_division">Division</label>
         <select id="cadastreDivision" onchange="onDivisionChange()">
-          <option value="" data-i18n="cadastre_loading">Loading divisions…</option>
+          <option value="">Loading divisions…</option>
         </select>
       </div>
       <div>
-        <label data-i18n="cadastre_input_mode">Location Input</label>
-        <select id="cadastreMode">
-          <option value="coords" data-i18n="cadastre_mode_coords">Type coordinates</option>
-          <option value="gps" data-i18n="cadastre_mode_gps">Use my GPS position</option>
+        <label data-i18n="cadastre_radius_lbl">Search Radius</label>
+        <select id="cadastreRadius">
+          <option value="50">50 m</option>
+          <option value="100" selected>100 m</option>
+          <option value="200">200 m</option>
+          <option value="500">500 m</option>
+          <option value="0">Full drawn polygon</option>
         </select>
       </div>
     </div>
 
-    <!-- Coordinate input -->
-    <div id="coordInputWrap">
-      <div class="form-row">
-        <div>
-          <label data-i18n="cadastre_lat">Latitude (°N)</label>
-          <input type="number" id="cadastreLat" placeholder="e.g. 3.8680" step="any">
+    <!-- Satellite map for lookup — always visible -->
+    <div class="map-preview-wrap" style="margin-bottom:14px;">
+      <div class="map-preview-header">
+        <div class="map-preview-title">🛰️ <span data-i18n="cadastre_map_title">Locate on Map</span></div>
+        <div class="map-layer-toggle">
+          <button class="map-layer-btn active" id="cLayerSat" onclick="setCadastreLayer('sat')">Satellite</button>
+          <button class="map-layer-btn" id="cLayerBing" onclick="setCadastreLayer('bing')">Bing</button>
+          <button class="map-layer-btn" id="cLayerStreet" onclick="setCadastreLayer('street')">Street</button>
         </div>
-        <div>
-          <label data-i18n="cadastre_lon">Longitude (°E)</label>
-          <input type="number" id="cadastreLon" placeholder="e.g. 11.5174" step="any">
+      </div>
+
+      <!-- Cadastre draw toolbar -->
+      <div class="draw-toolbar">
+        <div class="draw-modes">
+          <button class="draw-btn active" id="cDrawOff"     onclick="setCadastreMode('off')">✋ Off</button>
+          <button class="draw-btn"        id="cDrawPoint"   onclick="setCadastreMode('point')">📍 Point</button>
+          <button class="draw-btn"        id="cDrawPolygon" onclick="setCadastreMode('polygon')">⬡ Polygon</button>
         </div>
+        <button class="draw-action-btn" id="cFinishBtn" onclick="finishCadastrePolygon()" style="display:none;">✓ Finish</button>
+        <button class="draw-action-btn" onclick="clearCadastreDrawing()">🗑 Clear</button>
+        <button class="draw-action-btn" onclick="getCadastreGPS()">📡 GPS</button>
+      </div>
+
+      <div id="cadastreMap" style="width:100%;height:320px;background:#0c0906;"></div>
+
+      <div class="map-preview-footer">
+        <span id="cadastreMapInfo" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">Drop a point or draw a polygon to search</span>
+        <button class="map-fit-btn" onclick="searchCadastreFromMap()">🔍 <span>Search Area</span></button>
       </div>
     </div>
 
-    <div class="btn-row" style="margin-top:12px;">
-      <button class="btn btn-secondary" id="gpsBtn" onclick="getGPSLocation()" style="display:none;">
-        📍 <span data-i18n="cadastre_gps_btn">Get My Position</span>
-      </button>
-      <button class="btn btn-primary" onclick="lookupParcel()">
-        🔍 <span data-i18n="cadastre_search_btn">Find Parcel</span>
-      </button>
-    </div>
-
     <!-- Results -->
-    <div id="cadastreResult" style="display:none; margin-top:20px;">
+    <div id="cadastreResult" style="display:none; margin-top:4px;">
       <div class="card-title" style="margin-bottom:12px;">
         <span data-i18n="cadastre_result_title">Result</span>
       </div>
       <div id="cadastreResultContent"></div>
+
+      <!-- Export buttons — shown when results are found -->
+      <div id="cadastreExportBtns" style="display:none; margin-top:16px;">
+        <div class="card-title" style="margin-bottom:10px;"><span>Export</span></div>
+        <div class="dl-btns">
+          <button class="dl-btn" onclick="exportCadastrePDF()">
+            <span class="dl-btn-icon">📄</span>
+            <div><div class="dl-btn-label">PDF</div><div class="dl-btn-sub">Print / Save</div></div>
+          </button>
+          <button class="dl-btn" onclick="exportCadastreKML()">
+            <span class="dl-btn-icon">🌍</span>
+            <div><div class="dl-btn-label">KML</div><div class="dl-btn-sub">Google Earth · 3 layers</div></div>
+          </button>
+          <button class="dl-btn" onclick="exportCadastreDXF()">
+            <span class="dl-btn-icon">📐</span>
+            <div><div class="dl-btn-label">DXF</div><div class="dl-btn-sub">AutoCAD · UTM 32N</div></div>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1521,6 +1551,7 @@ footer span{color:var(--brand-orange);}
 <!-- JSZip for KMZ packaging -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -2894,14 +2925,29 @@ document.getElementById('dlCsv').addEventListener('click', (e) => {
 });
 
 // ═══════════════════════════════════════════════════════
-//  CADASTRAL LOOKUP ENGINE
-//  Fetches GeoJSON from the /cadastre/ folder on GitHub Pages,
-//  then does a point-in-polygon search for the given location.
+//  CADASTRAL LOOKUP ENGINE v2.0
+//  Satellite map always visible. User drops a point or draws
+//  a polygon. App clips all features in that zone from the
+//  GeoJSON (polygons + lines + text as-is from DXF).
+//  Export: PDF, KML (3 folders), DXF.
 // ═══════════════════════════════════════════════════════
 
-const CADASTRE_BASE = './cadastre/';  // relative to index.html on GitHub Pages
+const CADASTRE_BASE = './cadastre/';
 let cadastreManifest = null;
-let cadastreCache    = {};            // filename → parsed GeoJSON features
+let cadastreCache    = {};          // filename → parsed GeoJSON features
+let cadastreMap      = null;        // Leaflet map instance for lookup
+let cSatLayer = null, cBingLayer = null, cStreetLayer = null;
+let cCurrentLayer = 'sat';
+let cDrawMode = 'off';             // 'off' | 'point' | 'polygon'
+let cMarker   = null;              // dropped point marker
+let cPolygon  = null;              // drawn polygon
+let cPolyVerts = [];               // polygon vertices being drawn
+let cPolyLine  = null;             // preview polyline while drawing
+let cCloseLine = null;             // closing dashed line
+let cCircle   = null;              // radius circle preview
+let cResultFeatures = [];          // features found in last search
+let cSearchCenter = null;          // {lat,lon} of last search center
+let cSearchRadius = 0;             // metres
 
 // Load manifest on page start
 async function loadCadastreManifest() {
@@ -2911,187 +2957,816 @@ async function loadCadastreManifest() {
     cadastreManifest = await res.json();
     populateDivisionSelect();
   } catch(e) {
-    // Silently fail — lookup card still shows but division select stays empty
     console.warn('Cadastre manifest not loaded:', e.message);
   }
+  initCadastreMap();
 }
 
 function populateDivisionSelect() {
   const sel = document.getElementById('cadastreDivision');
-  sel.innerHTML = `<option value="">${t('cadastre_loading').replace('…','— select')}</option>`;
-  if (!cadastreManifest || !cadastreManifest.length) return;
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select division —</option>';
+  if (!cadastreManifest) return;
+
+  // Group entries by département — some divisions are tiled (multiple entries)
+  const divisions = {};
   for (const entry of cadastreManifest) {
+    const dept = entry.departement;
+    if (!divisions[dept]) divisions[dept] = [];
+    divisions[dept].push(entry);
+  }
+
+  for (const [dept, entries] of Object.entries(divisions).sort()) {
+    const isTiled = entries.some(e => e.tile_id);
+    const totalFeatures = entries.reduce((s,e) => s + (e.feature_count||0), 0);
+    const snapDate = entries[0].snapshot_date || '—';
     const opt = document.createElement('option');
-    opt.value = entry.filename;
-    opt.dataset.date = entry.snapshot_date;
-    opt.dataset.count = entry.parcel_count;
-    opt.textContent = `${entry.departement}  (${entry.parcel_count.toLocaleString()} parcels · ${entry.snapshot_date})`;
+    opt.value = dept;  // use département name as key, not filename
+    opt.textContent = `${dept}  (${totalFeatures.toLocaleString()} features${isTiled?' · tiled':''} · ${snapDate})`;
     sel.appendChild(opt);
   }
 }
 
 function onDivisionChange() {
-  // pre-load GeoJSON when division is selected so search is instant
-  const sel = document.getElementById('cadastreDivision');
-  const filename = sel.value;
-  if (filename && !cadastreCache[filename]) {
-    preloadDivision(filename);
-  }
+  const dept = document.getElementById('cadastreDivision').value;
+  if (dept) preloadDivisionTiles(dept, null);  // preload all tiles eagerly
   document.getElementById('cadastreResult').style.display = 'none';
 }
 
+// Get all manifest entries for a given département
+function getManifestEntries(dept) {
+  if (!cadastreManifest) return [];
+  return cadastreManifest.filter(e => e.departement === dept);
+}
+
+// Which tiles does a bounding box touch?
+function getTilesForBBox(dept, searchBBox) {
+  const entries = getManifestEntries(dept);
+  if (!entries.length) return [];
+  return entries.filter(entry => {
+    const tb = entry.bbox_with_overlap || entry.bbox;
+    if (!tb) return true; // non-tiled: always include
+    return bbox_intersects(
+      [tb[0], tb[1], tb[2], tb[3]],
+      [searchBBox.minX, searchBBox.minY, searchBBox.maxX, searchBBox.maxY]
+    );
+  });
+}
+
+async function preloadDivisionTiles(dept, searchBBox) {
+  const entries = searchBBox
+    ? getTilesForBBox(dept, searchBBox)
+    : getManifestEntries(dept);
+
+  const toLoad = entries.filter(e => !cadastreCache[e.filename]);
+  if (!toLoad.length) return;
+
+  const info = document.getElementById('cadastreMapInfo');
+  if (info && toLoad.length > 1)
+    info.textContent = `Loading ${toLoad.length} tile(s)…`;
+
+  await Promise.all(toLoad.map(async entry => {
+    try {
+      const res = await fetch(CADASTRE_BASE + entry.filename);
+      if (!res.ok) throw new Error('not found');
+      const gj = await res.json();
+      cadastreCache[entry.filename] = gj.features || [];
+      console.log('Loaded tile', entry.filename,
+                  cadastreCache[entry.filename].length, 'features');
+    } catch(e) {
+      console.warn('Could not load', entry.filename, e.message);
+    }
+  }));
+}
+
 async function preloadDivision(filename) {
+  if (cadastreCache[filename]) return;
   try {
     const res = await fetch(CADASTRE_BASE + filename);
-    if (!res.ok) throw new Error('file not found');
+    if (!res.ok) throw new Error('not found');
     const gj = await res.json();
     cadastreCache[filename] = gj.features || [];
   } catch(e) {
-    console.warn('Could not preload', filename, e.message);
+    console.warn('Could not load', filename, e.message);
   }
 }
 
-document.getElementById('cadastreMode').addEventListener('change', function() {
-  const isGPS = this.value === 'gps';
-  document.getElementById('coordInputWrap').style.display = isGPS ? 'none' : 'block';
-  document.getElementById('gpsBtn').style.display = isGPS ? 'flex' : 'none';
-});
+// ── Cadastre Map ────────────────────────────────────────
+function initCadastreMap() {
+  if (cadastreMap) return;
+  cadastreMap = L.map('cadastreMap', { zoomControl: true })
+                 .setView([3.87, 11.52], 13);
 
-function getGPSLocation() {
-  const btn = document.getElementById('gpsBtn');
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Locating…';
-  if (!navigator.geolocation) {
-    alert('GPS not available on this device.');
-    btn.disabled = false;
-    btn.innerHTML = `📍 ${t('cadastre_gps_btn')}`;
+  cSatLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: '© Esri', maxZoom: 20 });
+
+  cBingLayer = L.tileLayer(
+    'https://t{s}.ssl.ak.tiles.virtualearth.net/tiles/a{q}.jpeg?g=5765',
+    { attribution: '© Microsoft Bing', maxZoom: 20, subdomains: '0123' });
+
+  cStreetLayer = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution: '© OpenStreetMap contributors', maxZoom: 19 });
+
+  cSatLayer.addTo(cadastreMap);
+  cadastreMap.on('click', onCadastreMapClick);
+  setTimeout(() => cadastreMap.invalidateSize(), 300);
+}
+
+function setCadastreLayer(which) {
+  if (!cadastreMap) return;
+  cCurrentLayer = which;
+  ['cLayerSat','cLayerBing','cLayerStreet'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'cLayer'+which.charAt(0).toUpperCase()+which.slice(1));
+  });
+  [cSatLayer, cBingLayer, cStreetLayer].forEach(l => { if (l && cadastreMap.hasLayer(l)) cadastreMap.removeLayer(l); });
+  if (which === 'sat'    && cSatLayer)    cSatLayer.addTo(cadastreMap);
+  else if (which === 'bing'   && cBingLayer)   cBingLayer.addTo(cadastreMap);
+  else if (which === 'street' && cStreetLayer) cStreetLayer.addTo(cadastreMap);
+}
+
+function setCadastreMode(mode) {
+  if (cDrawMode === 'polygon' && mode !== 'polygon') finishCadastrePolygon();
+  cDrawMode = mode;
+  ['cDrawOff','cDrawPoint','cDrawPolygon'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'cDraw'+mode.charAt(0).toUpperCase()+mode.slice(1));
+  });
+  const finBtn = document.getElementById('cFinishBtn');
+  if (finBtn) finBtn.style.display = mode === 'polygon' ? 'inline-block' : 'none';
+  if (cadastreMap) cadastreMap.getContainer().style.cursor = mode === 'off' ? '' : 'crosshair';
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = mode === 'point'   ? 'Tap the map to drop a search point' :
+                                mode === 'polygon' ? 'Tap corners of your area, then tap Finish' :
+                                'Choose a draw mode or use GPS';
+}
+
+function onCadastreMapClick(e) {
+  if (cDrawMode === 'point') {
+    placeCadastrePoint(e.latlng.lat, e.latlng.lng);
+  } else if (cDrawMode === 'polygon') {
+    addCadastreVertex(e.latlng.lat, e.latlng.lng);
+  }
+}
+
+function placeCadastrePoint(lat, lon) {
+  clearCadastreDrawing();
+  const radius = parseInt(document.getElementById('cadastreRadius').value) || 100;
+  cSearchCenter = {lat, lon};
+  cSearchRadius = radius;
+
+  cMarker = L.circleMarker([lat, lon], {
+    radius: 8, color: '#fff', weight: 2,
+    fillColor: '#e2620e', fillOpacity: 1
+  }).addTo(cadastreMap);
+  cMarker.bindPopup(`📍 ${lat.toFixed(6)}, ${lon.toFixed(6)}`).openPopup();
+
+  if (radius > 0) {
+    cCircle = L.circle([lat, lon], {
+      radius, color: '#e2620e', weight: 2,
+      fillColor: '#e2620e', fillOpacity: 0.08,
+      dashArray: '6,4'
+    }).addTo(cadastreMap);
+  }
+
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = `Point: ${lat.toFixed(5)}, ${lon.toFixed(5)}  ·  Radius: ${radius}m — tap Search Area`;
+}
+
+function addCadastreVertex(lat, lon) {
+  cPolyVerts.push([lat, lon]);
+
+  if (cPolyLine) cadastreMap.removeLayer(cPolyLine);
+  cPolyLine = L.polyline(cPolyVerts, {
+    color: '#e2620e', weight: 2.5, dashArray: '6,4'
+  }).addTo(cadastreMap);
+
+  L.circleMarker([lat, lon], {
+    radius: 5, color: '#fff', weight: 1.5,
+    fillColor: '#e2620e', fillOpacity: 1
+  }).addTo(cadastreMap);
+
+  if (cPolyVerts.length >= 2) {
+    if (cCloseLine) cadastreMap.removeLayer(cCloseLine);
+    const first = cPolyVerts[0];
+    const last  = cPolyVerts[cPolyVerts.length-1];
+    cCloseLine = L.polyline([last, first], {
+      color: '#e2620e', weight: 1.5, dashArray: '3,6', opacity: 0.5
+    }).addTo(cadastreMap);
+  }
+
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = `${cPolyVerts.length} vertices — tap Finish to close polygon`;
+}
+
+function finishCadastrePolygon() {
+  if (cPolyVerts.length < 3) {
+    alert('Need at least 3 points to form a polygon.');
     return;
   }
+  if (cPolyLine)  cadastreMap.removeLayer(cPolyLine);
+  if (cCloseLine) cadastreMap.removeLayer(cCloseLine);
+
+  cPolygon = L.polygon(cPolyVerts, {
+    color: '#e2620e', weight: 2.5,
+    fillColor: '#e2620e', fillOpacity: 0.10
+  }).addTo(cadastreMap);
+
+  cSearchCenter = null;
+  cSearchRadius = 0;
+  setCadastreMode('off');
+
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = `Polygon: ${cPolyVerts.length} vertices — tap Search Area`;
+}
+
+function clearCadastreDrawing() {
+  [cMarker, cCircle, cPolygon, cPolyLine, cCloseLine].forEach(l => {
+    if (l && cadastreMap) try { cadastreMap.removeLayer(l); } catch(e) {}
+  });
+  cMarker = cCircle = cPolygon = cPolyLine = cCloseLine = null;
+  cPolyVerts = [];
+  cSearchCenter = null;
+  cSearchRadius = 0;
+  document.getElementById('cadastreResult').style.display = 'none';
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = 'Drop a point or draw a polygon to search';
+}
+
+function getCadastreGPS() {
+  if (!navigator.geolocation) { alert('GPS not available.'); return; }
+  const info = document.getElementById('cadastreMapInfo');
+  if (info) info.textContent = '⏳ Getting GPS position…';
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      document.getElementById('cadastreLat').value = pos.coords.latitude.toFixed(7);
-      document.getElementById('cadastreLon').value = pos.coords.longitude.toFixed(7);
-      document.getElementById('coordInputWrap').style.display = 'block';
-      btn.disabled = false;
-      btn.innerHTML = `📍 ${t('cadastre_gps_btn')}`;
-      lookupParcel();
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      cadastreMap.setView([lat, lon], 17);
+      setCadastreMode('point');
+      placeCadastrePoint(lat, lon);
     },
-    (err) => {
-      alert('GPS error: ' + err.message);
-      btn.disabled = false;
-      btn.innerHTML = `📍 ${t('cadastre_gps_btn')}`;
-    },
+    (err) => { alert('GPS error: ' + err.message); },
     { enableHighAccuracy: true, timeout: 15000 }
   );
 }
 
-async function lookupParcel() {
-  const sel      = document.getElementById('cadastreDivision');
-  const filename = sel.value;
-  const latEl    = document.getElementById('cadastreLat');
-  const lonEl    = document.getElementById('cadastreLon');
-  const resultDiv = document.getElementById('cadastreResult');
+// ── Search ──────────────────────────────────────────────
+async function searchCadastreFromMap() {
+  const sel  = document.getElementById('cadastreDivision');
+  const dept = sel ? sel.value : '';
+  if (!dept) { alert('Please select a division first.'); return; }
+
+  const resultDiv  = document.getElementById('cadastreResult');
   const contentDiv = document.getElementById('cadastreResultContent');
-
-  if (!filename) { alert(t('cadastre_no_div')); return; }
-
-  const lat = parseFloat(latEl.value);
-  const lon = parseFloat(lonEl.value);
-  if (isNaN(lat) || isNaN(lon)) { alert(t('cadastre_no_coords')); return; }
-
+  const exportDiv  = document.getElementById('cadastreExportBtns');
   resultDiv.style.display = 'block';
-  contentDiv.innerHTML = `<div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;">⏳ ${t('cadastre_loading_data')}</div>`;
+  contentDiv.innerHTML = `<div style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;">⏳ Loading data…</div>`;
+  exportDiv.style.display = 'none';
 
-  // Load if not cached
-  if (!cadastreCache[filename]) {
-    await preloadDivision(filename);
+  // Build search ring
+  let searchRing = null;
+  if (cSearchCenter && cSearchRadius > 0) {
+    searchRing = buildCircleRing(cSearchCenter.lat, cSearchCenter.lon, cSearchRadius);
+  } else if (cPolyVerts.length >= 3 || cPolygon) {
+    const verts = cPolyVerts.length >= 3
+      ? cPolyVerts
+      : cPolygon.getLatLngs()[0].map(ll => [ll.lat, ll.lng]);
+    searchRing = verts.map(v => [v[1], v[0]]);
+    if (searchRing[0][0] !== searchRing[searchRing.length-1][0]) searchRing.push(searchRing[0]);
   }
 
-  const features = cadastreCache[filename];
-  if (!features) {
-    contentDiv.innerHTML = `<div class="parcel-not-found">❌ Could not load parcel data.</div>`;
+  if (!searchRing) {
+    contentDiv.innerHTML = `<div class="parcel-not-found">🔍 Drop a point or draw a polygon first, then tap Search Area.</div>`;
     return;
   }
 
-  // Spatial point-in-polygon search
-  const selected = sel.options[sel.selectedIndex];
-  const snapshotDate = selected?.dataset?.date || '—';
+  const searchBBox = ringBBox(searchRing);
 
-  let found = null;
-  let bestArea = Infinity;
+  // Load only the tiles that overlap the search area
+  await preloadDivisionTiles(dept, searchBBox);
 
-  for (const feature of features) {
-    if (!feature.geometry || feature.geometry.type !== 'Polygon') continue;
-    const ring = feature.geometry.coordinates[0];
-    if (!ring || ring.length < 3) continue;
-    if (pointInRing(lon, lat, ring)) {
-      const area = ringArea(ring);
-      if (area < bestArea) { bestArea = area; found = feature; }
+  // Collect all features from relevant tiles (deduplicate by geometry string)
+  const entries = getTilesForBBox(dept, searchBBox);
+  const seen = new Set();
+  const allFeatures = [];
+  for (const entry of entries) {
+    const tileFeatures = cadastreCache[entry.filename] || [];
+    for (const f of tileFeatures) {
+      // Simple dedup key based on first coordinate
+      let key = '';
+      try {
+        const g = f.geometry;
+        if (g.type === 'Point') key = g.coordinates.join(',');
+        else if (g.type === 'Polygon') key = g.coordinates[0][0].join(',');
+        else if (g.type === 'LineString') key = g.coordinates[0].join(',');
+      } catch(e) { key = Math.random().toString(); }
+      if (!seen.has(key)) { seen.add(key); allFeatures.push(f); }
     }
   }
 
-  if (!found) {
-    contentDiv.innerHTML = `<div class="parcel-not-found">🔍 ${t('cadastre_not_found')}</div>`;
+  if (!allFeatures.length) {
+    // Fallback: try non-tiled single file
+    const singleEntry = getManifestEntries(dept).find(e => !e.tile_id);
+    if (singleEntry) {
+      await preloadDivision(singleEntry.filename);
+      allFeatures.push(...(cadastreCache[singleEntry.filename]||[]));
+    }
+  }
+
+  if (!allFeatures.length) {
+    contentDiv.innerHTML = `<div class="parcel-not-found">❌ Could not load data for this division.</div>`;
     return;
   }
 
-  const p = found.properties || {};
-  const hasData = p.label_raw || p.owner || p.arrondissement || p.lieu_dit || p.surface_m2;
+  // Clip to search area
+  const found = [];
+  for (const f of allFeatures) {
+    if (!f.geometry) continue;
+    const gt = f.geometry.type;
+    if (gt === 'Point') {
+      const [lon, lat] = f.geometry.coordinates;
+      if (lon>=searchBBox.minX && lon<=searchBBox.maxX &&
+          lat>=searchBBox.minY && lat<=searchBBox.maxY &&
+          pointInRing(lon, lat, searchRing)) found.push(f);
+    } else if (gt === 'Polygon') {
+      if (ringsOverlap(f.geometry.coordinates[0], searchRing, searchBBox)) found.push(f);
+    } else if (gt === 'LineString') {
+      if (lineIntersectsRing(f.geometry.coordinates, searchRing, searchBBox)) found.push(f);
+    }
+  }
+
+  cResultFeatures = found;
+
+  const nPoly = found.filter(f => f.geometry.type==='Polygon').length;
+  const nLine = found.filter(f => f.geometry.type==='LineString').length;
+  const nText = found.filter(f => f.geometry.type==='Point').length;
+
+  if (found.length === 0) {
+    contentDiv.innerHTML = `<div class="parcel-not-found">🔍 No features found in this area. Try a larger radius or different location.</div>`;
+    return;
+  }
+
+  // Display results
+  const entries2 = getManifestEntries(dept);
+  const snapshotDate = entries2[0]?.snapshot_date || '—';
 
   let html = `<div class="parcel-found">`;
-  html += `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--brand-orange3);letter-spacing:1px;margin-bottom:12px;">✅ ${t('cadastre_found').toUpperCase()}</div>`;
+  html += `<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--brand-orange3);letter-spacing:1px;margin-bottom:12px;">✅ ${found.length} FEATURES FOUND IN AREA</div>`;
+  html += `<div class="parcel-field"><span class="parcel-key">Polygons</span><span class="parcel-val highlight">${nPoly}</span></div>`;
+  html += `<div class="parcel-field"><span class="parcel-key">Lines</span><span class="parcel-val">${nLine}</span></div>`;
+  html += `<div class="parcel-field"><span class="parcel-key">Text labels</span><span class="parcel-val">${nText}</span></div>`;
 
-  if (!hasData) {
-    html += `<div style="color:var(--muted);font-size:13px;">⚠️ ${t('cadastre_no_data')}</div>`;
-  } else {
-    const fields = [
-      ['Département',    p.departement],
-      ['Arrondissement', p.arrondissement],
-      ['Lieu-dit',       p.lieu_dit],
-      ['Surface',        p.surface_m2 ? Math.round(p.surface_m2).toLocaleString() + ' m²' : null],
-      ['Propriétaire',   p.owner],
-      ['CCP',            p.ccp],
-      ['Géomètre',       p.geometre],
-    ];
-    for (const [key, val] of fields) {
-      if (!val) continue;
-      html += `<div class="parcel-field"><span class="parcel-key">${key}</span><span class="parcel-val">${escHtml(String(val))}</span></div>`;
-    }
-    if (p.label_raw) {
-      html += `<div class="parcel-field"><span class="parcel-key">Label raw</span><span class="parcel-val" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">${escHtml(p.label_raw.substring(0,200))}</span></div>`;
-    }
+  if (nText > 0) {
+    html += `<div style="margin-top:14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--brand-orange3);letter-spacing:1px;margin-bottom:8px;">TEXT LABELS IN AREA</div>`;
+    found.filter(f=>f.geometry.type==='Point').forEach(f => {
+      const txt = (f.properties&&f.properties.text)||'';
+      const lyr = (f.properties&&f.properties.layer)||'';
+      html += `<div class="parcel-field" style="align-items:flex-start;">
+        <span class="parcel-key" style="font-size:10px;">${escHtml(lyr)}</span>
+        <span class="parcel-val" style="font-family:'DM Mono',monospace;font-size:11px;white-space:pre-wrap;">${escHtml(txt.substring(0,400))}</span>
+      </div>`;
+    });
   }
 
-  html += `<div class="parcel-field"><span class="parcel-key">${t('cadastre_snapshot')}</span><span class="parcel-val">${escHtml(snapshotDate)}</span></div>`;
-  html += `<div style="font-size:11px;color:var(--muted);margin-top:12px;font-family:'DM Mono',monospace;">${t('cadastre_disclaimer')}</div>`;
+  html += `<div class="parcel-field"><span class="parcel-key">Snapshot</span><span class="parcel-val">${escHtml(snapshotDate)}</span></div>`;
+  html += `<div style="font-size:11px;color:var(--muted);margin-top:12px;font-family:'DM Mono',monospace;">For information only. Not an official cadastral document. Refer to MINDCAF for official verification.</div>`;
   html += `</div>`;
-
   contentDiv.innerHTML = html;
+  exportDiv.style.display = 'block';
+
+  drawFoundFeatures(found);
 }
 
-// Point-in-polygon for a GeoJSON ring [[lon,lat],...]
+// Draw found features on the cadastre map as an overlay
+let cFoundLayers = [];
+function drawFoundFeatures(features) {
+  cFoundLayers.forEach(l => { try { cadastreMap.removeLayer(l); } catch(e){} });
+  cFoundLayers = [];
+  const bounds = [];
+
+  features.forEach(f => {
+    const gt = f.geometry.type;
+    if (gt === 'Polygon') {
+      const coords = f.geometry.coordinates[0].map(c => [c[1], c[0]]);
+      const poly = L.polygon(coords, { color:'#fcd116', weight:2, fillOpacity:0 }).addTo(cadastreMap);
+      cFoundLayers.push(poly);
+      coords.forEach(c => bounds.push(c));
+    } else if (gt === 'LineString') {
+      const coords = f.geometry.coordinates.map(c => [c[1], c[0]]);
+      const line = L.polyline(coords, { color:'#00c261', weight:1.5 }).addTo(cadastreMap);
+      cFoundLayers.push(line);
+      coords.forEach(c => bounds.push(c));
+    } else if (gt === 'Point') {
+      const [lon, lat] = f.geometry.coordinates;
+      const txt = (f.properties && f.properties.text) || '';
+      const m = L.circleMarker([lat, lon], {
+        radius:5, color:'#fff', weight:1, fillColor:'#fcd116', fillOpacity:1
+      }).addTo(cadastreMap);
+      if (txt) m.bindPopup(`<pre style="font-size:11px;max-width:220px;white-space:pre-wrap;">${escHtml(txt.substring(0,300))}</pre>`);
+      cFoundLayers.push(m);
+      bounds.push([lat, lon]);
+    }
+  });
+
+  if (bounds.length > 0) {
+    try { cadastreMap.fitBounds(L.latLngBounds(bounds), { padding:[20,20] }); } catch(e) {}
+  }
+}
+
+// ── Geometry helpers ────────────────────────────────────
+function buildCircleRing(lat, lon, radiusM, steps=64) {
+  const ring = [];
+  const dLat = radiusM / 111320;
+  const dLon = radiusM / (111320 * Math.cos(lat * Math.PI/180));
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * 2 * Math.PI;
+    ring.push([lon + dLon*Math.sin(angle), lat + dLat*Math.cos(angle)]);
+  }
+  return ring;
+}
+
+function ringBBox(ring) {
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  for (const [x,y] of ring) { minX=Math.min(minX,x); maxX=Math.max(maxX,x); minY=Math.min(minY,y); maxY=Math.max(maxY,y); }
+  return {minX, maxX, minY, maxY};
+}
+
 function pointInRing(px, py, ring) {
   let inside = false;
   const n = ring.length;
-  let j = n - 1;
-  for (let i = 0; i < n; i++) {
-    const xi = ring[i][0], yi = ring[i][1];
-    const xj = ring[j][0], yj = ring[j][1];
-    if (((yi > py) !== (yj > py)) && (px < (xj-xi)*(py-yi)/(yj-yi+1e-12)+xi)) inside = !inside;
-    j = i;
+  let j = n-1;
+  for (let i=0; i<n; i++) {
+    const [xi,yi]=[ring[i][0],ring[i][1]], [xj,yj]=[ring[j][0],ring[j][1]];
+    if (((yi>py)!==(yj>py)) && (px<(xj-xi)*(py-yi)/(yj-yi+1e-12)+xi)) inside=!inside;
+    j=i;
   }
   return inside;
 }
 
-function ringArea(ring) {
-  let a = 0;
-  const n = ring.length;
-  for (let i = 0; i < n; i++) {
-    const j = (i+1) % n;
-    a += ring[i][0]*ring[j][1] - ring[j][0]*ring[i][1];
+function ringsOverlap(ring1, ring2, bbox2) {
+  // Check if any vertex of ring1 is inside ring2 or vice versa
+  for (const [x,y] of ring1) {
+    if (x>=bbox2.minX && x<=bbox2.maxX && y>=bbox2.minY && y<=bbox2.maxY) {
+      if (pointInRing(x, y, ring2)) return true;
+    }
   }
+  const bbox1 = ringBBox(ring1);
+  for (const [x,y] of ring2) {
+    if (x>=bbox1.minX && x<=bbox1.maxX && y>=bbox1.minY && y<=bbox1.maxY) {
+      if (pointInRing(x, y, ring1)) return true;
+    }
+  }
+  return false;
+}
+
+function lineIntersectsRing(coords, ring, bbox) {
+  for (const [x,y] of coords) {
+    if (x>=bbox.minX && x<=bbox.maxX && y>=bbox.minY && y<=bbox.maxY) {
+      if (pointInRing(x, y, ring)) return true;
+    }
+  }
+  return false;
+}
+
+function ringArea(ring) {
+  let a=0, n=ring.length;
+  for (let i=0; i<n; i++) { const j=(i+1)%n; a+=ring[i][0]*ring[j][1]-ring[j][0]*ring[i][1]; }
   return Math.abs(a)/2;
 }
+
+// ── EXPORTS ─────────────────────────────────────────────
+// KML — 3 folders: Area Features, Line Features, Text Features
+function exportCadastreKML() {
+  if (!cResultFeatures.length) return;
+  const name = document.getElementById('cadastreDivision').options[document.getElementById('cadastreDivision').selectedIndex]?.text || 'Cadastre';
+
+  const areas = cResultFeatures.filter(f => f.geometry.type === 'Polygon');
+  const lines  = cResultFeatures.filter(f => f.geometry.type === 'LineString');
+  const texts  = cResultFeatures.filter(f => f.geometry.type === 'Point');
+
+  const fmtCoords = coords => coords.map(c => `${c[0]},${c[1]},0`).join(' ');
+
+  let fp = '';
+  // Area Features folder
+  fp += '  <Folder><name>Area Features</name>
+';
+  areas.forEach(f => {
+    const ring = f.geometry.coordinates[0];
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <Style><LineStyle><color>ff0e62e2</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
+      <Polygon><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${fmtCoords(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+`;
+  });
+  fp += '  </Folder>
+';
+
+  // Line Features folder
+  fp += '  <Folder><name>Line Features</name>
+';
+  lines.forEach(f => {
+    const coords = f.geometry.coordinates;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <Style><LineStyle><color>ff61c200</color><width>2</width></LineStyle></Style>
+      <LineString><altitudeMode>clampToGround</altitudeMode><coordinates>${fmtCoords(coords)}</coordinates></LineString>
+    </Placemark>
+`;
+  });
+  fp += '  </Folder>
+';
+
+  // Text Features folder
+  fp += '  <Folder><name>Text Features</name>
+';
+  texts.forEach(f => {
+    const [lon,lat] = f.geometry.coordinates;
+    const txt = (f.properties.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <description>${txt}</description>
+      <Style><IconStyle><scale>0</scale></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>
+      <Point><coordinates>${lon},${lat},0</coordinates></Point>
+    </Placemark>
+`;
+  });
+  fp += '  </Folder>
+';
+
+  const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>${x(name)}</name>
+  <description>CAM Topographer · Cadastral extract · Not an official document · Refer to MINDCAF</description>
+${fp}
+</Document>
+</kml>`;
+
+  const blob = new Blob([kml], {type:'application/vnd.google-earth.kml+xml'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cadastre_extract.kml';
+  a.click();
+}
+
+// DXF — basic R12 DXF with all geometry + text
+function exportCadastreDXF() {
+  if (!cResultFeatures.length) return;
+  // Get UTM zone from manifest entry
+  const sel = document.getElementById('cadastreDivision');
+  const fn = sel.value;
+  const entry = (cadastreManifest||[]).find(e => e.filename === fn);
+  const zone = (entry && entry.zone_utm) || 32;
+
+  // We store WGS84 in GeoJSON. For DXF we convert back to UTM.
+  // Simple approximation using inverse of our RGNC-corrected UTM
+  function latLonToUTMApprox(lat, lon) {
+    // Remove RGNC correction first
+    const rawLat = lat - (-0.00017199);
+    const rawLon = lon - (-0.00000235);
+    // Forward UTM (simplified, good to ~1m for our purposes)
+    const a=6378137.0, f=1/298.257222101, k0=0.9996, E0=500000;
+    const e2=2*f-f*f, ep2=e2/(1-e2);
+    const phi=rawLat*Math.PI/180;
+    const lam=rawLon*Math.PI/180;
+    const lon0=((zone-1)*6-180+3)*Math.PI/180;
+    const sp=Math.sin(phi),cp=Math.cos(phi),tp=Math.tan(phi);
+    const N=a/Math.sqrt(1-e2*sp*sp);
+    const T=tp*tp, C=ep2*cp*cp;
+    const A=(lam-lon0)*cp;
+    const e4=e2*e2, e6=e4*e2;
+    const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi
+      -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
+      +(15*e4/256+45*e6/1024)*Math.sin(4*phi)
+      -(35*e6/3072)*Math.sin(6*phi));
+    const A2=A*A,A3=A2*A,A4=A2*A2,A5=A4*A,A6=A4*A2;
+    const E=E0+k0*N*(A+(1-T+C)*A3/6+(5-18*T+T*T+72*C-58*ep2)*A5/120);
+    const Nv=k0*(M+N*tp*(A2/2+(5-T+9*C+4*C*C)*A4/24+(61-58*T+T*T+600*C-330*ep2)*A6/720));
+    return {E: Math.round(E*1000)/1000, N: Math.round(Nv*1000)/1000};
+  }
+
+  let dxf = '  0
+SECTION
+  2
+HEADER
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+';
+
+  cResultFeatures.forEach(f => {
+    const gt = f.geometry.type;
+    const layer = (f.properties && f.properties.layer) || '0';
+
+    if (gt === 'Polygon') {
+      const ring = f.geometry.coordinates[0];
+      dxf += '  0
+LWPOLYLINE
+  8
+' + layer + '
+ 90
+' + ring.length + '
+ 70
+1
+';
+      ring.forEach(([lon,lat]) => {
+        const {E,N} = latLonToUTMApprox(lat, lon);
+        dxf += ' 10
+'+E+'
+ 20
+'+N+'
+';
+      });
+    } else if (gt === 'LineString') {
+      const coords = f.geometry.coordinates;
+      dxf += '  0
+LWPOLYLINE
+  8
+' + layer + '
+ 90
+' + coords.length + '
+ 70
+0
+';
+      coords.forEach(([lon,lat]) => {
+        const {E,N} = latLonToUTMApprox(lat, lon);
+        dxf += ' 10
+'+E+'
+ 20
+'+N+'
+';
+      });
+    } else if (gt === 'Point') {
+      const [lon,lat] = f.geometry.coordinates;
+      const {E,N} = latLonToUTMApprox(lat, lon);
+      const txt = ((f.properties && f.properties.text) || '').replace(/
+/g,' ');
+      dxf += '  0
+TEXT
+  8
+'+layer+'
+ 10
+'+E+'
+ 20
+'+N+'
+ 30
+0
+ 40
+2.5
+  1
+'+txt+'
+';
+    }
+  });
+
+  dxf += '  0
+ENDSEC
+  0
+EOF
+';
+
+  const blob = new Blob([dxf], {type:'application/dxf'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cadastre_extract.dxf';
+  a.click();
+}
+
+// PDF — captures the live map as an image + all text labels below
+async function exportCadastrePDF() {
+  if (!cResultFeatures.length) return;
+
+  const btn = document.querySelector('[onclick="exportCadastrePDF()"]');
+  if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
+
+  const sel = document.getElementById('cadastreDivision');
+  const divName      = sel.options[sel.selectedIndex]?.text || '—';
+  const snapshotDate = sel.options[sel.selectedIndex]?.dataset?.date || '—';
+  const nPoly = cResultFeatures.filter(f=>f.geometry.type==='Polygon').length;
+  const nLine = cResultFeatures.filter(f=>f.geometry.type==='LineString').length;
+  const nText = cResultFeatures.filter(f=>f.geometry.type==='Point').length;
+
+  // ── Capture the map as a base64 image ──
+  let mapImageDataURL = null;
+  try {
+    const mapEl = document.getElementById('cadastreMap');
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      scale: 2,
+      backgroundColor: '#0c0906'
+    });
+    mapImageDataURL = canvas.toDataURL('image/jpeg', 0.90);
+  } catch(e) {
+    console.warn('Map capture failed:', e.message);
+  }
+
+  // ── Build text labels HTML ──
+  const texts = cResultFeatures
+    .filter(f => f.geometry.type === 'Point' && f.properties && f.properties.text)
+    .map((f, i) => {
+      const txt = f.properties.text.substring(0, 800);
+      const lyr = f.properties.layer || '';
+      return `<div style="margin-bottom:10px;padding:8px 10px;border:1px solid #ddd;border-radius:4px;page-break-inside:avoid;">
+        <div style="font-size:9px;color:#888;font-family:monospace;margin-bottom:4px;">${lyr}</div>
+        <pre style="white-space:pre-wrap;margin:0;font-family:monospace;font-size:11px;line-height:1.5;">${txt}</pre>
+      </div>`;
+    }).join('');
+
+  // ── North arrow SVG ──
+  const northArrow = `<svg width="36" height="36" viewBox="0 0 36 36" style="display:inline-block;">
+    <polygon points="18,2 22,20 18,17 14,20" fill="#222"/>
+    <polygon points="18,34 14,16 18,19 22,16" fill="#bbb"/>
+    <text x="18" y="10" text-anchor="middle" font-size="8" font-weight="bold" fill="#222">N</text>
+  </svg>`;
+
+  // ── Compute scale bar ──
+  let scaleTxt = '';
+  try {
+    const bounds = cadastreMap.getBounds();
+    const w = cadastreMap.getSize().x;
+    const distM = bounds.getSouthWest().distanceTo(bounds.getSouthEast());
+    const mPerPx = distM / w;
+    const barM = Math.round(mPerPx * 80 / 10) * 10 || 50;
+    scaleTxt = `Scale bar ≈ ${barM} m`;
+  } catch(e) {}
+
+  // ── Build and open print window ──
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+<title>Cadastral Extract — ${divName}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 16px; color: #222; font-size: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .brand { color: #e2620e; font-weight: bold; font-size: 13px; }
+  .title { font-size: 15px; font-weight: bold; margin: 4px 0 2px; }
+  .meta { font-size: 11px; color: #555; }
+  .logo-placeholder { font-size: 10px; color: #aaa; border: 1px solid #ddd; padding: 6px 10px; border-radius: 4px; }
+  .map-container { position: relative; width: 100%; margin: 10px 0; border: 1px solid #999; border-radius: 4px; overflow: hidden; }
+  .map-container img { width: 100%; display: block; }
+  .map-overlay { position: absolute; bottom: 8px; right: 8px; background: rgba(255,255,255,0.9); border-radius: 4px; padding: 4px 8px; font-size: 10px; }
+  .map-overlay-left { position: absolute; bottom: 8px; left: 8px; background: rgba(255,255,255,0.9); border-radius: 4px; padding: 4px 8px; font-size: 10px; }
+  .north { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.85); border-radius: 50%; padding: 2px; }
+  .stats { display: flex; gap: 12px; background: #f7f7f7; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 11px; }
+  .stat-item { text-align: center; }
+  .stat-val { font-size: 16px; font-weight: bold; color: #e2620e; display: block; }
+  .section-title { font-size: 12px; font-weight: bold; border-bottom: 2px solid #e2620e; padding-bottom: 4px; margin: 12px 0 8px; }
+  .disclaimer { font-size: 9px; color: #888; border: 1px solid #ddd; padding: 8px; border-radius: 4px; margin-top: 14px; line-height: 1.5; }
+  .no-text { color: #aaa; font-size: 11px; font-style: italic; }
+  @media print {
+    body { margin: 0; padding: 10px; }
+    .no-print { display: none; }
+  }
+</style>
+</head><body>
+
+<div class="header">
+  <div>
+    <div class="brand">Civil-Arch-Immo · CAM Topographer</div>
+    <div class="title">Mise à jour Cadastrale — ${divName}</div>
+    <div class="meta">Snapshot: ${snapshotDate} &nbsp;·&nbsp; Extracted: ${new Date().toLocaleDateString('fr-FR')} &nbsp;·&nbsp; Abdulrahim · Géomètre Expert · Yaoundé</div>
+  </div>
+  <div class="logo-placeholder">CIVIL-ARCH-IMMO</div>
+</div>
+
+<div class="stats">
+  <div class="stat-item"><span class="stat-val">${nPoly}</span>Polygons</div>
+  <div class="stat-item"><span class="stat-val">${nLine}</span>Lines</div>
+  <div class="stat-item"><span class="stat-val">${nText}</span>Labels</div>
+</div>
+
+${mapImageDataURL ? `
+<div class="map-container">
+  <img src="${mapImageDataURL}" alt="Cadastral map extract">
+  <div class="north">${northArrow}</div>
+  <div class="map-overlay-left">🟡 Polygons &nbsp; 🟢 Lines &nbsp; 🟡● Text</div>
+  <div class="map-overlay">${scaleTxt}</div>
+</div>` : '<div style="border:1px solid #ddd;padding:20px;text-align:center;color:#aaa;margin:10px 0;">Map image not available</div>'}
+
+<div class="section-title">Text Labels Found in Search Area</div>
+${texts || '<p class="no-text">No text labels found in this search area.</p>'}
+
+<div class="disclaimer">
+  ⚠️ <strong>DISCLAIMER / AVERTISSEMENT</strong><br>
+  This extract is provided for information purposes only and does not constitute an official cadastral document.
+  For any legal, administrative or transactional use, refer to MINDCAF (Ministère des Domaines, du Cadastre et des Affaires Foncières) for official verification.<br>
+  Ce relevé est fourni à titre informatif uniquement et ne constitue pas un document cadastral officiel.
+  Pour tout usage juridique, administratif ou transactionnel, référez-vous au MINDCAF pour une vérification officielle.<br>
+  © ${new Date().getFullYear()} Civil-Arch-Immo · CAM Topographer · All rights reserved.
+</div>
+
+<script>window.onload = function(){ setTimeout(()=>window.print(), 600); }<\/script>
+</body></html>`);
+  win.document.close();
+
+  if (btn) { btn.innerHTML = '📄'; btn.disabled = false; }
+}
+
+function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ═══════════════════════════════════════════════════════
 //  INIT
