@@ -19,7 +19,142 @@
     "departement": "MFOUNDI",
     "filename": "MFOUNDI_2024-11-25.geojson",
     "snapshot_date": "2024-11-25",
-    "parcel_count": 10450,
+    "polygon_count": 350381,
+    "line_count": 600622,
+    "text_count": 69632,
+    "total_features": 1020635,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_1_1.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "1_1",
+    "bbox": [
+      8.004929,
+      1.672591,
+      11.503974,
+      3.835911
+    ],
+    "bbox_with_overlap": [
+      8.003578,
+      1.67124,
+      11.505325,
+      3.837263
+    ],
+    "overlap_m": 150,
+    "feature_count": 178298,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_1_2.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "1_2",
+    "bbox": [
+      11.503974,
+      1.508149,
+      14.665237,
+      3.868105
+    ],
+    "bbox_with_overlap": [
+      11.502623,
+      1.506798,
+      14.666588,
+      3.869457
+    ],
+    "overlap_m": 150,
+    "feature_count": 181750,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_2_1.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "2_1",
+    "bbox": [
+      8.004929,
+      3.835912,
+      11.503974,
+      3.877783
+    ],
+    "bbox_with_overlap": [
+      8.003578,
+      3.834561,
+      11.505325,
+      3.879134
+    ],
+    "overlap_m": 150,
+    "feature_count": 178455,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_2_2.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "2_2",
+    "bbox": [
+      11.503974,
+      3.868107,
+      14.665237,
+      3.909691
+    ],
+    "bbox_with_overlap": [
+      11.502623,
+      3.866756,
+      14.666588,
+      3.911043
+    ],
+    "overlap_m": 150,
+    "feature_count": 180194,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_3_1.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "3_1",
+    "bbox": [
+      8.004929,
+      3.877783,
+      11.503974,
+      7.216386
+    ],
+    "bbox_with_overlap": [
+      8.003578,
+      3.876431,
+      11.505325,
+      7.217737
+    ],
+    "overlap_m": 150,
+    "feature_count": 187429,
+    "zone_utm": 32,
+    "hemisphere": "N"
+  },
+  {
+    "departement": "MFOUNDI",
+    "filename": "MFOUNDI_2024-11-25_tile_3_2.geojson",
+    "snapshot_date": "2024-11-25",
+    "tile_id": "3_2",
+    "bbox": [
+      11.503974,
+      3.909691,
+      14.665237,
+      12.882322
+    ],
+    "bbox_with_overlap": [
+      11.502623,
+      3.90834,
+      14.666588,
+      12.883673
+    ],
+    "overlap_m": 150,
+    "feature_count": 174803,
     "zone_utm": 32,
     "hemisphere": "N"
   }
