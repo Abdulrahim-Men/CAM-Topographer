@@ -3449,58 +3449,29 @@ function exportCadastreKML() {
   const fmtCoords = coords => coords.map(c => `${c[0]},${c[1]},0`).join(' ');
 
   let fp = '';
-  // Area Features folder
-  fp += '  <Folder><name>Area Features</name>
-';
+  fp += '  <Folder><name>Area Features</name>\n';
   areas.forEach(f => {
     const ring = f.geometry.coordinates[0];
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
-      <Style><LineStyle><color>ff0e62e2</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
-      <Polygon><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${fmtCoords(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>
-    </Placemark>
-`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <Style><LineStyle><color>ff0e62e2</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>\n      <Polygon><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${fmtCoords(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>\n    </Placemark>\n`;
   });
-  fp += '  </Folder>
-';
+  fp += '  </Folder>\n';
 
-  // Line Features folder
-  fp += '  <Folder><name>Line Features</name>
-';
+  fp += '  <Folder><name>Line Features</name>\n';
   lines.forEach(f => {
     const coords = f.geometry.coordinates;
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
-      <Style><LineStyle><color>ff61c200</color><width>2</width></LineStyle></Style>
-      <LineString><altitudeMode>clampToGround</altitudeMode><coordinates>${fmtCoords(coords)}</coordinates></LineString>
-    </Placemark>
-`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <Style><LineStyle><color>ff61c200</color><width>2</width></LineStyle></Style>\n      <LineString><altitudeMode>clampToGround</altitudeMode><coordinates>${fmtCoords(coords)}</coordinates></LineString>\n    </Placemark>\n`;
   });
-  fp += '  </Folder>
-';
+  fp += '  </Folder>\n';
 
-  // Text Features folder
-  fp += '  <Folder><name>Text Features</name>
-';
+  fp += '  <Folder><name>Text Features</name>\n';
   texts.forEach(f => {
     const [lon,lat] = f.geometry.coordinates;
     const txt = (f.properties.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
-      <description>${txt}</description>
-      <Style><IconStyle><scale>0</scale></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>
-      <Point><coordinates>${lon},${lat},0</coordinates></Point>
-    </Placemark>
-`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <description>${txt}</description>\n      <Style><IconStyle><scale>0</scale></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>\n      <Point><coordinates>${lon},${lat},0</coordinates></Point>\n    </Placemark>\n`;
   });
-  fp += '  </Folder>
-';
+  fp += '  </Folder>\n';
 
-  const kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-<Document>
-  <name>${x(name)}</name>
-  <description>CAM Topographer · Cadastral extract · Not an official document · Refer to MINDCAF</description>
-${fp}
-</Document>
-</kml>`;
+  const kml = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <name>${x(name)}</name>\n  <description>CAM Topographer · Cadastral extract · Not an official document · Refer to MINDCAF</description>\n${fp}\n</Document>\n</kml>`;
 
   const blob = new Blob([kml], {type:'application/vnd.google-earth.kml+xml'});
   const a = document.createElement('a');
