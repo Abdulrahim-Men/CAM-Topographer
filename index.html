@@ -3512,28 +3512,20 @@ ${fp}
 // DXF — basic R12 DXF with all geometry + text
 function exportCadastreDXF() {
   if (!cResultFeatures.length) return;
-  // Get UTM zone from manifest entry
   const sel = document.getElementById('cadastreDivision');
-  const fn = sel.value;
-  const entry = (cadastreManifest||[]).find(e => e.filename === fn);
+  const entry = (cadastreManifest||[]).find(e => e.departement === sel.value);
   const zone = (entry && entry.zone_utm) || 32;
 
-  // We store WGS84 in GeoJSON. For DXF we convert back to UTM.
-  // Simple approximation using inverse of our RGNC-corrected UTM
   function latLonToUTMApprox(lat, lon) {
-    // Remove RGNC correction first
-    const rawLat = lat - (-0.00017199);
-    const rawLon = lon - (-0.00000235);
-    // Forward UTM (simplified, good to ~1m for our purposes)
+    const rawLat = lat + 0.00017199;
+    const rawLon = lon + 0.00000235;
     const a=6378137.0, f=1/298.257222101, k0=0.9996, E0=500000;
     const e2=2*f-f*f, ep2=e2/(1-e2);
-    const phi=rawLat*Math.PI/180;
-    const lam=rawLon*Math.PI/180;
+    const phi=rawLat*Math.PI/180, lam=rawLon*Math.PI/180;
     const lon0=((zone-1)*6-180+3)*Math.PI/180;
     const sp=Math.sin(phi),cp=Math.cos(phi),tp=Math.tan(phi);
     const N=a/Math.sqrt(1-e2*sp*sp);
-    const T=tp*tp, C=ep2*cp*cp;
-    const A=(lam-lon0)*cp;
+    const T=tp*tp, C=ep2*cp*cp, A=(lam-lon0)*cp;
     const e4=e2*e2, e6=e4*e2;
     const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi
       -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
@@ -3545,88 +3537,34 @@ function exportCadastreDXF() {
     return {E: Math.round(E*1000)/1000, N: Math.round(Nv*1000)/1000};
   }
 
-  let dxf = '  0
-SECTION
-  2
-HEADER
-  0
-ENDSEC
-  0
-SECTION
-  2
-ENTITIES
-';
+  let dxf = '  0\nSECTION\n  2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n';
 
   cResultFeatures.forEach(f => {
     const gt = f.geometry.type;
     const layer = (f.properties && f.properties.layer) || '0';
-
     if (gt === 'Polygon') {
       const ring = f.geometry.coordinates[0];
-      dxf += '  0
-LWPOLYLINE
-  8
-' + layer + '
- 90
-' + ring.length + '
- 70
-1
-';
+      dxf += '  0\nLWPOLYLINE\n  8\n' + layer + '\n 90\n' + ring.length + '\n 70\n1\n';
       ring.forEach(([lon,lat]) => {
         const {E,N} = latLonToUTMApprox(lat, lon);
-        dxf += ' 10
-'+E+'
- 20
-'+N+'
-';
+        dxf += ' 10\n'+E+'\n 20\n'+N+'\n';
       });
     } else if (gt === 'LineString') {
       const coords = f.geometry.coordinates;
-      dxf += '  0
-LWPOLYLINE
-  8
-' + layer + '
- 90
-' + coords.length + '
- 70
-0
-';
+      dxf += '  0\nLWPOLYLINE\n  8\n' + layer + '\n 90\n' + coords.length + '\n 70\n0\n';
       coords.forEach(([lon,lat]) => {
         const {E,N} = latLonToUTMApprox(lat, lon);
-        dxf += ' 10
-'+E+'
- 20
-'+N+'
-';
+        dxf += ' 10\n'+E+'\n 20\n'+N+'\n';
       });
     } else if (gt === 'Point') {
       const [lon,lat] = f.geometry.coordinates;
       const {E,N} = latLonToUTMApprox(lat, lon);
-      const txt = ((f.properties && f.properties.text) || '').replace(/
-/g,' ');
-      dxf += '  0
-TEXT
-  8
-'+layer+'
- 10
-'+E+'
- 20
-'+N+'
- 30
-0
- 40
-2.5
-  1
-'+txt+'
-';
+      const txt = ((f.properties && f.properties.text) || '').replace(/\n/g,' ');
+      dxf += '  0\nTEXT\n  8\n'+layer+'\n 10\n'+E+'\n 20\n'+N+'\n 30\n0\n 40\n2.5\n  1\n'+txt+'\n';
     }
   });
 
-  dxf += '  0
-ENDSEC
-  0
-EOF
-';
+  dxf += '  0\nENDSEC\n  0\nEOF\n';
 
   const blob = new Blob([dxf], {type:'application/dxf'});
   const a = document.createElement('a');
