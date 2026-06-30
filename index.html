@@ -3006,10 +3006,8 @@ function getTilesForBBox(dept, searchBBox) {
   return entries.filter(entry => {
     const tb = entry.bbox_with_overlap || entry.bbox;
     if (!tb) return true; // non-tiled: always include
-    return bbox_intersects(
-      [tb[0], tb[1], tb[2], tb[3]],
-      [searchBBox.minX, searchBBox.minY, searchBBox.maxX, searchBBox.maxY]
-    );
+    return !(tb[2] < searchBBox.minX || tb[0] > searchBBox.maxX ||
+             tb[3] < searchBBox.minY || tb[1] > searchBBox.maxY);
   });
 }
 
@@ -3025,18 +3023,25 @@ async function preloadDivisionTiles(dept, searchBBox) {
   if (info && toLoad.length > 1)
     info.textContent = `Loading ${toLoad.length} tile(s)…`;
 
-  await Promise.all(toLoad.map(async entry => {
-    try {
-      const res = await fetch(CADASTRE_BASE + entry.filename);
-      if (!res.ok) throw new Error('not found');
-      const gj = await res.json();
-      cadastreCache[entry.filename] = gj.features || [];
-      console.log('Loaded tile', entry.filename,
-                  cadastreCache[entry.filename].length, 'features');
-    } catch(e) {
-      console.warn('Could not load', entry.filename, e.message);
+  // Load tiles sequentially to avoid HTTP2 protocol errors with large files
+  for (const entry of toLoad) {
+    let loaded = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(CADASTRE_BASE + entry.filename);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const gj = await res.json();
+        cadastreCache[entry.filename] = gj.features || [];
+        console.log('Loaded tile', entry.filename, cadastreCache[entry.filename].length, 'features');
+        loaded = true;
+        break;
+      } catch(e) {
+        console.warn('Attempt', attempt, 'failed for', entry.filename, e.message);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
     }
-  }));
+    if (!loaded) console.warn('Could not load', entry.filename, 'after 3 attempts');
+  }
 }
 
 async function preloadDivision(filename) {
@@ -3449,29 +3454,58 @@ function exportCadastreKML() {
   const fmtCoords = coords => coords.map(c => `${c[0]},${c[1]},0`).join(' ');
 
   let fp = '';
-  fp += '  <Folder><name>Area Features</name>\n';
+  // Area Features folder
+  fp += '  <Folder><name>Area Features</name>
+';
   areas.forEach(f => {
     const ring = f.geometry.coordinates[0];
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <Style><LineStyle><color>ff0e62e2</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>\n      <Polygon><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${fmtCoords(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>\n    </Placemark>\n`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <Style><LineStyle><color>ff0e62e2</color><width>2</width></LineStyle><PolyStyle><fill>0</fill></PolyStyle></Style>
+      <Polygon><altitudeMode>clampToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${fmtCoords(ring)}</coordinates></LinearRing></outerBoundaryIs></Polygon>
+    </Placemark>
+`;
   });
-  fp += '  </Folder>\n';
+  fp += '  </Folder>
+';
 
-  fp += '  <Folder><name>Line Features</name>\n';
+  // Line Features folder
+  fp += '  <Folder><name>Line Features</name>
+';
   lines.forEach(f => {
     const coords = f.geometry.coordinates;
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <Style><LineStyle><color>ff61c200</color><width>2</width></LineStyle></Style>\n      <LineString><altitudeMode>clampToGround</altitudeMode><coordinates>${fmtCoords(coords)}</coordinates></LineString>\n    </Placemark>\n`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <Style><LineStyle><color>ff61c200</color><width>2</width></LineStyle></Style>
+      <LineString><altitudeMode>clampToGround</altitudeMode><coordinates>${fmtCoords(coords)}</coordinates></LineString>
+    </Placemark>
+`;
   });
-  fp += '  </Folder>\n';
+  fp += '  </Folder>
+';
 
-  fp += '  <Folder><name>Text Features</name>\n';
+  // Text Features folder
+  fp += '  <Folder><name>Text Features</name>
+';
   texts.forEach(f => {
     const [lon,lat] = f.geometry.coordinates;
     const txt = (f.properties.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>\n      <description>${txt}</description>\n      <Style><IconStyle><scale>0</scale></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>\n      <Point><coordinates>${lon},${lat},0</coordinates></Point>\n    </Placemark>\n`;
+    fp += `    <Placemark><name>${x(f.properties.layer||'')}</name>
+      <description>${txt}</description>
+      <Style><IconStyle><scale>0</scale></IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>
+      <Point><coordinates>${lon},${lat},0</coordinates></Point>
+    </Placemark>
+`;
   });
-  fp += '  </Folder>\n';
+  fp += '  </Folder>
+';
 
-  const kml = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <name>${x(name)}</name>\n  <description>CAM Topographer · Cadastral extract · Not an official document · Refer to MINDCAF</description>\n${fp}\n</Document>\n</kml>`;
+  const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>${x(name)}</name>
+  <description>CAM Topographer · Cadastral extract · Not an official document · Refer to MINDCAF</description>
+${fp}
+</Document>
+</kml>`;
 
   const blob = new Blob([kml], {type:'application/vnd.google-earth.kml+xml'});
   const a = document.createElement('a');
@@ -3483,20 +3517,28 @@ function exportCadastreKML() {
 // DXF — basic R12 DXF with all geometry + text
 function exportCadastreDXF() {
   if (!cResultFeatures.length) return;
+  // Get UTM zone from manifest entry
   const sel = document.getElementById('cadastreDivision');
-  const entry = (cadastreManifest||[]).find(e => e.departement === sel.value);
+  const fn = sel.value;
+  const entry = (cadastreManifest||[]).find(e => e.filename === fn);
   const zone = (entry && entry.zone_utm) || 32;
 
+  // We store WGS84 in GeoJSON. For DXF we convert back to UTM.
+  // Simple approximation using inverse of our RGNC-corrected UTM
   function latLonToUTMApprox(lat, lon) {
-    const rawLat = lat + 0.00017199;
-    const rawLon = lon + 0.00000235;
+    // Remove RGNC correction first
+    const rawLat = lat - (-0.00017199);
+    const rawLon = lon - (-0.00000235);
+    // Forward UTM (simplified, good to ~1m for our purposes)
     const a=6378137.0, f=1/298.257222101, k0=0.9996, E0=500000;
     const e2=2*f-f*f, ep2=e2/(1-e2);
-    const phi=rawLat*Math.PI/180, lam=rawLon*Math.PI/180;
+    const phi=rawLat*Math.PI/180;
+    const lam=rawLon*Math.PI/180;
     const lon0=((zone-1)*6-180+3)*Math.PI/180;
     const sp=Math.sin(phi),cp=Math.cos(phi),tp=Math.tan(phi);
     const N=a/Math.sqrt(1-e2*sp*sp);
-    const T=tp*tp, C=ep2*cp*cp, A=(lam-lon0)*cp;
+    const T=tp*tp, C=ep2*cp*cp;
+    const A=(lam-lon0)*cp;
     const e4=e2*e2, e6=e4*e2;
     const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi
       -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
@@ -3508,34 +3550,88 @@ function exportCadastreDXF() {
     return {E: Math.round(E*1000)/1000, N: Math.round(Nv*1000)/1000};
   }
 
-  let dxf = '  0\nSECTION\n  2\nHEADER\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n';
+  let dxf = '  0
+SECTION
+  2
+HEADER
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+';
 
   cResultFeatures.forEach(f => {
     const gt = f.geometry.type;
     const layer = (f.properties && f.properties.layer) || '0';
+
     if (gt === 'Polygon') {
       const ring = f.geometry.coordinates[0];
-      dxf += '  0\nLWPOLYLINE\n  8\n' + layer + '\n 90\n' + ring.length + '\n 70\n1\n';
+      dxf += '  0
+LWPOLYLINE
+  8
+' + layer + '
+ 90
+' + ring.length + '
+ 70
+1
+';
       ring.forEach(([lon,lat]) => {
         const {E,N} = latLonToUTMApprox(lat, lon);
-        dxf += ' 10\n'+E+'\n 20\n'+N+'\n';
+        dxf += ' 10
+'+E+'
+ 20
+'+N+'
+';
       });
     } else if (gt === 'LineString') {
       const coords = f.geometry.coordinates;
-      dxf += '  0\nLWPOLYLINE\n  8\n' + layer + '\n 90\n' + coords.length + '\n 70\n0\n';
+      dxf += '  0
+LWPOLYLINE
+  8
+' + layer + '
+ 90
+' + coords.length + '
+ 70
+0
+';
       coords.forEach(([lon,lat]) => {
         const {E,N} = latLonToUTMApprox(lat, lon);
-        dxf += ' 10\n'+E+'\n 20\n'+N+'\n';
+        dxf += ' 10
+'+E+'
+ 20
+'+N+'
+';
       });
     } else if (gt === 'Point') {
       const [lon,lat] = f.geometry.coordinates;
       const {E,N} = latLonToUTMApprox(lat, lon);
-      const txt = ((f.properties && f.properties.text) || '').replace(/\n/g,' ');
-      dxf += '  0\nTEXT\n  8\n'+layer+'\n 10\n'+E+'\n 20\n'+N+'\n 30\n0\n 40\n2.5\n  1\n'+txt+'\n';
+      const txt = ((f.properties && f.properties.text) || '').replace(/
+/g,' ');
+      dxf += '  0
+TEXT
+  8
+'+layer+'
+ 10
+'+E+'
+ 20
+'+N+'
+ 30
+0
+ 40
+2.5
+  1
+'+txt+'
+';
     }
   });
 
-  dxf += '  0\nENDSEC\n  0\nEOF\n';
+  dxf += '  0
+ENDSEC
+  0
+EOF
+';
 
   const blob = new Blob([dxf], {type:'application/dxf'});
   const a = document.createElement('a');
