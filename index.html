@@ -3006,10 +3006,8 @@ function getTilesForBBox(dept, searchBBox) {
   return entries.filter(entry => {
     const tb = entry.bbox_with_overlap || entry.bbox;
     if (!tb) return true; // non-tiled: always include
-    return bbox_intersects(
-      [tb[0], tb[1], tb[2], tb[3]],
-      [searchBBox.minX, searchBBox.minY, searchBBox.maxX, searchBBox.maxY]
-    );
+    return !(tb[2] < searchBBox.minX || tb[0] > searchBBox.maxX ||
+             tb[3] < searchBBox.minY || tb[1] > searchBBox.maxY);
   });
 }
 
@@ -3025,18 +3023,25 @@ async function preloadDivisionTiles(dept, searchBBox) {
   if (info && toLoad.length > 1)
     info.textContent = `Loading ${toLoad.length} tile(s)…`;
 
-  await Promise.all(toLoad.map(async entry => {
-    try {
-      const res = await fetch(CADASTRE_BASE + entry.filename);
-      if (!res.ok) throw new Error('not found');
-      const gj = await res.json();
-      cadastreCache[entry.filename] = gj.features || [];
-      console.log('Loaded tile', entry.filename,
-                  cadastreCache[entry.filename].length, 'features');
-    } catch(e) {
-      console.warn('Could not load', entry.filename, e.message);
+  // Load tiles sequentially to avoid HTTP2 protocol errors with large files
+  for (const entry of toLoad) {
+    let loaded = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(CADASTRE_BASE + entry.filename);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const gj = await res.json();
+        cadastreCache[entry.filename] = gj.features || [];
+        console.log('Loaded tile', entry.filename, cadastreCache[entry.filename].length, 'features');
+        loaded = true;
+        break;
+      } catch(e) {
+        console.warn('Attempt', attempt, 'failed for', entry.filename, e.message);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
     }
-  }));
+    if (!loaded) console.warn('Could not load', entry.filename, 'after 3 attempts');
+  }
 }
 
 async function preloadDivision(filename) {
